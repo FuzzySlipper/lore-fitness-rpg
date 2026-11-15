@@ -1,0 +1,39 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Dependency/build output (component layouts are still planned)
+node_modules/
+.pnpm-store/
+.gradle/
+.kotlin/
+build/
+dist/
+coverage/
+*.apk
+*.aab
+
+# Local runtime and device evidence; use synthetic fixtures for committed tests
+local/
+data/
+logs/
+backups/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
+
+# Editor/OS state
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
