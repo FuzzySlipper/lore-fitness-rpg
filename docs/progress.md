@@ -61,3 +61,17 @@ Codex session `s/ae5ff1cf833e7d5d` prepared the implementation outline, individu
 stage plans, source map and coordination instructions. The plan incorporates
 Patch's choice to keep all desktop components on den-lore. Feature implementation
 and physical-device validation remain unstarted.
+
+Repository setup is complete:
+
+- Public repository: [FuzzySlipper/lore-fitness-rpg](https://github.com/FuzzySlipper/lore-fitness-rpg).
+- Initial planning commit: `825bc96d682c28928e55d0f99b80d6fa1f3e3bb6` on `main`.
+- Development checkout: `/home/agent/dev/lore-fitness-rpg`.
+- den-lore checkout: `C:\Dev\lore-fitness-rpg`, cloned from the public repository.
+- Validation: all 11 Markdown files checked for relative links and whitespace;
+  all six stage plans have consistent initial status; `git diff --cached --check`
+  passed. GitHub visibility was verified as public and the initial remote clone
+  was clean at the planning commit.
+
+These are repository/document checks. No fitness service or native application
+was installed or started, and no product test was claimed.
