@@ -10,9 +10,11 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
 | Path | Purpose |
 | --- | --- |
 | [`mock-gm/server.mjs`](mock-gm/server.mjs) | Scripted OpenAI-compatible model for the game master. Deterministic and free; logs every request Marinara sends to `mock-gm-requests.jsonl` |
-| [`scripts/serve-scratch-marinara.sh`](scripts/serve-scratch-marinara.sh) | Starts a scratch Marinara on `--port` and the mock GM on `port+1`, then creates a default "Mock GM" connection |
-| [`den-serve.json`](den-serve.json) | den-serve manifest so the crew playtest service can host one private scratch Marinara per session |
+| [`scripts/serve-scratch-marinara.sh`](scripts/serve-scratch-marinara.sh) | Starts a scratch Marinara on `--port` and the mock GM on `port+1`, then creates a default "Mock GM" connection; with `--model-url` a "Real GM" connection (reasoning off) becomes the default instead |
+| [`den-serve.json`](den-serve.json) | den-serve manifest so the crew playtest service can host one private scratch Marinara per session, with the mock GM |
+| [`den-serve-live.json`](den-serve-live.json) | The same with the real model on den-nimo as the default connection |
 | [`checks/swipe-persistence.mjs`](checks/swipe-persistence.mjs) | Stage 1 runtime check: projected build, projection marker and a granted item survive regenerate, swipe switch and continue |
+| [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text |
 | [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning) for the stage 2 history generator |
 
 ## One-time setup on den-agents
@@ -30,9 +32,11 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
    PATH=$HOME/.local/opt/node24/bin:$PATH pnpm build
    ```
 
-3. The crew playtest profile `lore-fitness-marinara` in
-   `~/.config/crew-playtest/games.json` (hosted, browser backend) names this
-   repository and `harness/den-serve.json`; run `playtest reload` after editing it.
+3. The crew playtest profiles `lore-fitness-marinara` (mock GM) and
+   `lore-fitness-marinara-live` (real model) in
+   `~/.config/crew-playtest/games.json` (hosted, browser backend) name this
+   repository and `harness/den-serve.json` or `harness/den-serve-live.json`; run
+   `playtest reload` after editing them.
 
 ## Running
 
@@ -46,11 +50,25 @@ bash harness/scripts/serve-scratch-marinara.sh --port 7910 --data ~/dev/lore-fit
 node harness/checks/swipe-persistence.mjs --base http://127.0.0.1:7910
 ```
 
-A browser playtest session with its own scratch world:
+The same with the real game master, and its smoke check:
+
+```bash
+bash harness/scripts/serve-scratch-marinara.sh --port 7910 --data ~/dev/lore-fitness-rpg-work/scratch-live --model-url http://192.168.1.23:13305/api/v1
+```
+
+```bash
+node harness/checks/real-turn.mjs --base http://127.0.0.1:7910
+```
+
+A browser playtest session with its own scratch world (mock GM, or
+`lore-fitness-marinara-live` for the real model):
 
 ```bash
 playtest start lore-fitness-marinara
 ```
+
+The session reports ready when Marinara serves its page; the connections appear
+a second or two later.
 
 Stop it with `playtest stop SESSION`; that ends the scratch Marinara and the
 mock GM too. Give the mock GM a reply script with `--script FILE` (format in
@@ -59,9 +77,12 @@ the server's header comment) to stage specific turns.
 ## Model choice
 
 Mechanical runs (rewards, rolls, locked results, swipes) use the mock GM.
-Playtests of tone, companion voice and pacing need a real model behind a
-`custom` connection. That model and whose account pays for it are not chosen
-yet; never point the harness at Lore's own provider connections.
+Playtests of tone, companion voice and pacing use `Gemma-4-26B-A4B-it-MTP-GGUF`
+on Patch's LAN Lemonade servers: den-nimo `http://192.168.1.23:13305/api/v1`
+by default, den-m5 `http://192.168.1.24:13305/api/v1` for a second concurrent
+session (each serves one request at a time). No API key. Reasoning must stay
+off; the [stage 6 real-model default](../docs/06-stabilization-and-release.md#real-model-default)
+records why. Never point the harness at Lore's own provider connections.
 
 ## Still to build
 

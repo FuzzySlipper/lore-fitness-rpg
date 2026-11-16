@@ -16,7 +16,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | [3 — Marinara integration](03-marinara-integration.md) | Planned | Unassigned | Build the fitness module: game-build projection, locked results and committed UI actions; DSH after |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Harness scaffold works; next, scripted persona sessions and a real-model connection |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Harness scaffold and real-model profile work; next, scripted persona sessions and a scratch ledger |
 
 ## Confirmed decisions
 
@@ -33,6 +33,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-16 | Lore's razr and Watch 3 can be made available for agent testing; Lore's time and attention are the bounded resource | Patch, in plan review |
 | 2026-11-16 | Upstreaming to Marinara is unnecessary; keep changes modular, but a sprawling fork is acceptable when the functionality needs it | Patch, in plan review |
 | 2026-11-16 | Lore plays the Inquisitor directly; the Inquisitor's race (human, elf, dwarf, Qunari) must be easy to change | Lore, relayed by Patch |
+| 2026-11-16 | Internal tone and voice playtests use Gemma 4 26B A4B on the LAN Lemonade servers (den-nimo, den-m5) that Patch set up; reasoning off; mechanical checks stay on the mock game master | Patch provided the servers; reasoning-off and server split are agent defaults |
 | 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
@@ -139,3 +140,24 @@ scripted persona sessions, scratch ledger, real-model connection.
 Validation: the swipe-persistence check above; link/anchor check of all
 Markdown. No fitness service or native app exists yet, and nothing was installed
 on den-lore.
+
+### 2026-11-16 — Real game-master model for internal playtests
+
+Claude Code session `s/a60d803335a9aa0a`. Patch set up Lemonade with
+`Gemma-4-26B-A4B-it-MTP-GGUF` on den-m5 and den-nimo. Device capture is deferred
+until Lore's devices are available again.
+
+- Both servers answered directly (full 262144 context, `--parallel 1`).
+- Through a scratch Marinara, Game Mode's default maximum reasoning truncated
+  one reply and leaked planning text into another (24–66 s per turn). With the
+  connection's reasoning set to none, Marinara sends `enable_thinking=false`;
+  turns then took 5–11 s with clean, in-voice prose.
+- `serve-scratch-marinara.sh --model-url` creates that connection; playtest
+  profile `lore-fitness-marinara-live` (manifest `harness/den-serve-live.json`)
+  hosts it. A hosted session ran `harness/checks/real-turn.mjs` and was stopped.
+  The mock game master now logs request parameters, which is how the reasoning
+  setting was confirmed.
+
+Validation: observed real turns on scratch Marinara and in a hosted playtest
+session; no browser-driven play or persona session yet. Next action: scripted
+persona sessions and the scratch ledger.

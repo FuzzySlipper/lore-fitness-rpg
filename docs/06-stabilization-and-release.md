@@ -24,6 +24,10 @@ Build the harness now, alongside the other stages.
 - [x] Hosted scratch Marinara with a scripted mock game master, registered as
   playtest profile `lore-fitness-marinara`; a session booted and rendered
   Marinara on 2026-11-16. See [`harness/`](../harness/README.md).
+- [x] Real game-master model for tone, voice and pacing playtests: Gemma 4 26B
+  A4B (MTP) on Patch's LAN Lemonade servers, as playtest profile
+  `lore-fitness-marinara-live`; real Game Mode turns observed on 2026-11-16 (see
+  [Real-model default](#real-model-default)).
 - [ ] Drive Marinara's real Game Mode UI (the `product-playtest` crew service is
   one option) against a scratch ledger fed by the stage 2 synthetic history
   generator.
@@ -34,6 +38,24 @@ Build the harness now, alongside the other stages.
   companion voice and knowledge, pacing, and anything confusing or dull.
 - [ ] Use findings to tune rules and content; file defects as small synthetic
   repros in the owning stage.
+
+### Real-model default
+
+| Item | Default |
+| --- | --- |
+| Model | `Gemma-4-26B-A4B-it-MTP-GGUF` (Q4_K_M with an MTP draft), served by Lemonade 2026.46.2 with llama.cpp Vulkan, 262144-token context, one request at a time per server |
+| Servers | den-nimo `http://192.168.1.23:13305/api/v1` (default) and den-m5 `http://192.168.1.24:13305/api/v1` (second concurrent playtest or fallback). Set up by Patch; no API key |
+| Marinara connection | Provider `custom`, created by `serve-scratch-marinara.sh --model-url`; scratch Marinara needs `PROVIDER_LOCAL_URLS_ENABLED=true` to reach LAN addresses |
+| Reasoning | Off. Game Mode requests maximum reasoning by default; with this thinking model that truncated a reply and leaked about 16,000 characters of planning into the story. The connection's default parameters set reasoning to none, so Marinara sends `chat_template_kwargs.enable_thinking=false` |
+| Observed speed | 5–11 s per Game Mode turn with reasoning off (about 70 tokens/s generation), against 24–66 s with it on |
+| Payer | None; Patch's own hardware. Never Lore's provider connections |
+
+Mechanical checks keep using the mock game master, which is deterministic and
+free. [`harness/checks/real-turn.mjs`](../harness/checks/real-turn.mjs) is the
+smoke check for a real model: two turns and a regenerate with their timing and
+opening text. Its Cullen and Cassandra replies used Game Mode speaker tags and
+stayed in voice; one called Cassandra's armor "templar", a lore slip for the
+stage 5 lorebooks to correct.
 
 ## Windows deployment work
 

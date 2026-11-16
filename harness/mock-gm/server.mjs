@@ -82,7 +82,8 @@ createServer((req, res) => {
       return;
     }
     const reply = chooseReply(body);
-    log({ model: body.model, stream: Boolean(body.stream), messages: body.messages, tools: body.tools, reply });
+    const { model, stream, messages, tools, ...parameters } = body;
+    log({ model, stream: Boolean(stream), parameters, messages, tools, reply });
     const id = `mock-${Date.now()}`;
     const created = Math.floor(Date.now() / 1000);
     if (body.stream) {
