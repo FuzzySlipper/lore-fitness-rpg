@@ -11,12 +11,12 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 
 | Stage | Status | Owner | Next action |
 | --- | --- | --- | --- |
-| [1 — Platform contract](01-platform-contract.md) | Planned | Unassigned | Run the targeted swipe/inventory/dice checks and the device capture on Lore's razr and Watch 3 |
+| [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Run the targeted swipe/inventory/dice checks and the device capture on Lore's razr and Watch 3 |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Planned | Unassigned | Build the ledger with the default daily check-in reward model and the synthetic history generator |
 | [3 — Marinara integration](03-marinara-integration.md) | Planned | Unassigned | Build the fitness module: game-build projection, locked results and committed UI actions; DSH after |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | Planned | Unassigned | Build the internal playtest harness now; integrate and release once 1–5 are complete |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Build the internal playtest harness now; integrate and release once 1–5 are complete |
 
 ## Confirmed decisions
 
@@ -32,7 +32,8 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-16 | The watch is an engagement feature because Lore loves gadgets; playful watch uses are in scope | Patch, in plan review |
 | 2026-11-16 | Lore's razr and Watch 3 can be made available for agent testing; Lore's time and attention are the bounded resource | Patch, in plan review |
 | 2026-11-16 | Upstreaming to Marinara is unnecessary; keep changes modular, but a sprawling fork is acceptable when the functionality needs it | Patch, in plan review |
-| 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 | Agent-proposed defaults under Patch's defaults-over-questions direction |
+| 2026-11-16 | Lore plays the Inquisitor directly; the Inquisitor's race (human, elf, dwarf, Qunari) must be easy to change | Lore, relayed by Patch |
+| 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
 Unresolved implementation details remain proposals until verified or selected;

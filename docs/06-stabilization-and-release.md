@@ -1,6 +1,6 @@
 # Stage 6 — Stabilization, deployment and first playtest release
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: Planned; internal playtest harness in progress. Harness owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-16). Updated: 2026-11-16.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: ruleset and campaign](05-campaign-season.md)

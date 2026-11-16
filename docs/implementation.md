@@ -65,7 +65,7 @@ experience, not a series of partial versions.
 
 | System | Included behavior |
 | --- | --- |
-| Onboarding | Character identity/class, relation to the Inquisitor, world-state and spoiler preferences, companions, goals, quiet hours and device setup |
+| Onboarding | The Inquisitor's name, race (human, elf, dwarf, Qunari; changeable later) and class, world-state and spoiler preferences, companions, goals, quiet hours and device setup |
 | Activity journal | Verified automatic imports; manual activity, meals, water and recovery; correction/undo, backdating, provenance and visible sync state |
 | Progression | Daily category check-ins, permanent development, talents, preparation resources, equipment/crafting and explainable reward receipts |
 | Campaign | Skyhold hub, three authored acts with a complete resolution, regional expeditions, recurring operations and recovery-day content |

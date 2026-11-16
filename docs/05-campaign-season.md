@@ -45,8 +45,9 @@ Use these unless Patch says otherwise; record any change here.
 | Choice | Default |
 | --- | --- |
 | Timeline | After the Inquisition settles at Skyhold and before the assault on Adamant; Corypheus is active and undefeated |
-| Lore's character | An Inquisition agent and recruit Lore creates at onboarding, not the Inquisitor |
-| The Inquisitor | Present but kept mostly offscreen and unnamed, so the campaign does not contradict Lore's own playthrough choices |
+| Lore's character | The Inquisitor, played directly (Lore's choice, relayed by Patch on 2026-11-16) |
+| Inquisitor race | Human, elf, dwarf or Qunari (Vashoth), chosen at onboarding and changeable later from a setting without restarting the campaign or touching the ledger |
+| Inquisitor class and name | Class comes from the ruleset (Warrior, Rogue, Mage) and is chosen at onboarding; name, appearance notes and pronouns are free-form |
 | Companion secrets | Solas's identity, Blackwall's past and Iron Bull's Ben-Hassrath ties stay hidden unless a companion arc's conditions reveal them; no Trespasser content in season one |
 | Romance | Not a default campaign track; companion relationships are friendship and loyalty |
 | Alternate history | None by default; any deliberate divergence is recorded in the content pack |
@@ -65,6 +66,12 @@ Use these unless Patch says otherwise; record any change here.
 ## Full-season work
 
 - [ ] Separate authored canon, campaign choices, played-event memory and mechanics.
+- [ ] Make Inquisitor race a single campaign variable. Key race-specific
+  content to it: companion reactions (for example Sera and Solas with an elven
+  Inquisitor, Iron Bull with a Vashoth one, Cassandra and Leliana on a human
+  noble), NPC address and prejudice, backstory hooks, and any ruleset traits.
+  Changing the race swaps those entries and the character build's race line;
+  it never alters activity, grants or past session summaries.
 - [ ] Author all eight requested companions: Solas, Cassandra, Leliana, Cullen,
   Dorian, Sera, Iron Bull and Blackwall.
 - [ ] Build Skyhold as a returning hub with training, companion scenes,

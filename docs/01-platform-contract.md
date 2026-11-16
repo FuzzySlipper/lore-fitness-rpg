@@ -1,6 +1,6 @@
 # Stage 1 — Platform contract and integration checks
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-16). Updated: 2026-11-16.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Next: durable mechanics](02-durable-mechanics.md)
