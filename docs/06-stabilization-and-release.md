@@ -21,10 +21,14 @@ updates. Avoid enterprise or hostile-user exercises in this household project.
 Lore's attention is the bounded resource, so agents play the campaign first.
 Build the harness now, alongside the other stages.
 
+- [x] Hosted scratch Marinara with a scripted mock game master, registered as
+  playtest profile `lore-fitness-marinara`; a session booted and rendered
+  Marinara on 2026-11-16. See [`harness/`](../harness/README.md).
 - [ ] Drive Marinara's real Game Mode UI (the `product-playtest` crew service is
   one option) against a scratch ledger fed by the stage 2 synthetic history
   generator.
-- [ ] Script personas: steady routine, busy weeks, illness/recovery stretch,
+- [x] Persona definitions in [`harness/personas.json`](../harness/personas.json).
+- [ ] Scripted persona sessions: steady routine, busy weeks, illness/recovery stretch,
   several missed days and a return after a break.
 - [ ] Record per session: rewards granted, rolls, locked results under swipes,
   companion voice and knowledge, pacing, and anything confusing or dull.

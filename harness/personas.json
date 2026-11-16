@@ -1,0 +1,79 @@
+{
+  "$comment": "Synthetic activity personas for internal playtests. Each week pattern lists, per day (Mon..Sun), the categories the persona completes. The stage 2 history generator expands these into activity events with sources and times; the harness feeds them to a scratch ledger. All data is synthetic.",
+  "categories": ["moved", "strength", "mobility", "meal", "hydration", "rest"],
+  "personas": [
+    {
+      "id": "steady",
+      "description": "A settled routine: walks most days, strength twice a week, a weekly rest day.",
+      "weeks": 4,
+      "week": [
+        ["moved", "strength", "hydration", "meal"],
+        ["moved", "mobility", "hydration"],
+        ["moved", "hydration", "meal"],
+        ["moved", "strength", "hydration"],
+        ["moved", "mobility", "meal"],
+        ["moved", "hydration"],
+        ["rest", "hydration", "meal"]
+      ],
+      "sources": { "moved": ["ohealth-steps", "ohealth-walk"], "strength": ["watch-drill", "manual"], "mobility": ["manual"], "meal": ["manual"], "hydration": ["watch-quick"], "rest": ["manual"] }
+    },
+    {
+      "id": "busy",
+      "description": "Two heavy work weeks with sparse logging, then a normal week.",
+      "weeks": 3,
+      "weekOverrides": {
+        "0": [["moved"], [], ["hydration"], [], ["moved"], [], []],
+        "1": [[], ["moved"], [], [], ["hydration"], [], ["rest"]]
+      },
+      "week": [
+        ["moved", "strength", "hydration"],
+        ["moved", "hydration"],
+        ["moved", "mobility", "meal"],
+        ["moved", "hydration"],
+        ["moved", "strength"],
+        ["moved", "meal"],
+        ["rest"]
+      ],
+      "sources": { "moved": ["ohealth-steps"], "strength": ["manual"], "mobility": ["manual"], "meal": ["manual"], "hydration": ["phone-quick"], "rest": ["manual"] }
+    },
+    {
+      "id": "illness",
+      "description": "A normal week, then ten days of recovery with only rest and hydration, then a gradual return.",
+      "weeks": 4,
+      "dayOverrides": { "7-16": ["rest", "hydration"], "17-20": ["moved", "hydration"] },
+      "week": [
+        ["moved", "strength", "hydration"],
+        ["moved", "mobility"],
+        ["moved", "hydration", "meal"],
+        ["moved", "strength"],
+        ["moved", "hydration"],
+        ["moved", "meal"],
+        ["rest"]
+      ],
+      "sources": { "moved": ["ohealth-walk"], "strength": ["watch-drill"], "mobility": ["manual"], "meal": ["manual"], "hydration": ["watch-quick"], "rest": ["manual"] }
+    },
+    {
+      "id": "missed-days",
+      "description": "Irregular: logs two or three days a week with gaps of several days and no declared rest.",
+      "weeks": 3,
+      "week": [["moved", "hydration"], [], [], ["strength"], [], ["moved", "meal"], []],
+      "sources": { "moved": ["ohealth-steps", "manual"], "strength": ["manual"], "meal": ["manual"], "hydration": ["phone-quick"] }
+    },
+    {
+      "id": "returning",
+      "description": "Three weeks of steady activity, a three-week gap with nothing logged, then a return week.",
+      "weeks": 7,
+      "dayOverrides": { "21-41": [] },
+      "week": [
+        ["moved", "strength", "hydration"],
+        ["moved", "mobility"],
+        ["moved", "hydration", "meal"],
+        ["moved", "strength"],
+        ["moved", "hydration"],
+        ["moved", "meal"],
+        ["rest"]
+      ],
+      "sources": { "moved": ["ohealth-walk", "ohealth-steps"], "strength": ["watch-drill"], "mobility": ["manual"], "meal": ["manual"], "hydration": ["watch-quick"], "rest": ["manual"] }
+    }
+  ]
+}

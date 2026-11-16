@@ -18,14 +18,16 @@ the complete release described in the outline.
 
 ## Targeted checks
 
-- [ ] **Game build survives swipes at runtime.** Write a level/build change to
+- [x] **Game build survives swipes at runtime.** Observed 2026-11-16 on a scratch
+  instance; see [findings](platform-findings-2026-11-16.md). Write a level/build change to
   `chat.metadata.gameCharacterCards[].rulesetSheet` in a scratch Game Mode chat,
   then swipe, regenerate and continue the turn. Marinara's design notes say the
   game build does not rewind; confirm it in the running build.
-- [ ] **Inventory rewind behavior.** Determine whether inventory stacks rewind
+- [x] **Inventory rewind behavior.** Observed for UI-path adds and source-traced
+  2026-11-16. Determine whether inventory stacks rewind
   with swipes. If they do, apply crafted or granted items through the committed
   UI-action path rather than through a narrated turn.
-- [ ] **Locked dice.** Trace how the pre-thrown dice queue keeps swipe,
+- [x] **Locked dice.** Source-traced 2026-11-16; default extension point recorded. Trace how the pre-thrown dice queue keeps swipe,
   regenerate and continue on the same values, and where the fitness module can
   extend that guarantee to every mechanical turn.
 - [ ] **Device capture.** With Lore's razr and Watch 3 available, record the
@@ -33,11 +35,20 @@ the complete release described in the outline.
   writes to Health Connect (steps, exercise sessions, duration, distance, sleep,
   heart rate, hydration); typical delay before records appear; Health Services
   capabilities; and the paired-device Data Layer path.
-- [ ] **den-lore runtime.** Choose the service port, data directory, Windows
+- [x] **den-lore runtime.** Default plan recorded 2026-11-16 (port 7900, startup
+  Scheduled Task with S4U, Private-profile firewall rule). Choose the service port, data directory, Windows
   startup mechanism and firewall rule, and note how Windows Update reboots
   affect startup order with Marinara and DSH.
-- [ ] Reinspect the current custom Marinara and DSH revisions, their repository
+- [x] Reinspect the current custom Marinara and DSH revisions, their repository
   instructions and build paths, and record commit pointers.
+
+## Current findings
+
+[Platform findings 2026-11-16](platform-findings-2026-11-16.md). Main surprises:
+the Marinara Lore runs is `C:\Dev\Marinara-Engine` (`local/cartesia-2.4.6`),
+not `Marinara-Custom`; build writes go through a whole-array, last-writer-wins
+metadata patch; and the locked-result record should key on the player's user
+message. Remaining: the device capture, pending connection of Lore's devices.
 
 ## Defaults if a check is inconclusive
 
@@ -76,10 +87,12 @@ and ledger together on den-lore as Patch requested.
 
 ## Acceptance evidence
 
-- [ ] Each targeted check has an observed result or a recorded default.
+- [ ] Each targeted check has an observed result or a recorded default (all but
+  the device capture, 2026-11-16).
 - [ ] The device capability matrix distinguishes observed, unsupported and
   untested values.
-- [ ] The chosen Windows service arrangement can coexist with the existing apps.
+- [ ] The chosen Windows service arrangement can coexist with the existing apps
+  (port 7900 observed free; not yet installed).
 
 Do not silently turn simulated results into device verification.
 

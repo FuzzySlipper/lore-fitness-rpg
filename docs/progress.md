@@ -11,12 +11,12 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 
 | Stage | Status | Owner | Next action |
 | --- | --- | --- | --- |
-| [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Run the targeted swipe/inventory/dice checks and the device capture on Lore's razr and Watch 3 |
+| [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Planned | Unassigned | Build the ledger with the default daily check-in reward model and the synthetic history generator |
 | [3 — Marinara integration](03-marinara-integration.md) | Planned | Unassigned | Build the fitness module: game-build projection, locked results and committed UI actions; DSH after |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Build the internal playtest harness now; integrate and release once 1–5 are complete |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Harness scaffold works; next, scripted persona sessions and a real-model connection |
 
 ## Confirmed decisions
 
@@ -108,3 +108,34 @@ Validation: Markdown relative links and anchors checked; whitespace checked. Thi
 is a documentation change; no application code was written or run and no device
 was tested. Next action: assign owners and start stages 1–5 and the stage 6
 playtest harness in parallel.
+
+### 2026-11-16 — Stage 1 checks and playtest harness scaffold
+
+Claude Code session `s/a60d803335a9aa0a`. Lore chose (via Patch) to play the
+Inquisitor directly with an easily changed race; stage 5 canon defaults updated
+in `2105951`.
+
+Stage 1, recorded in [platform findings](platform-findings-2026-11-16.md):
+
+- **Observed on den-lore:** Lore runs `C:\Dev\Marinara-Engine` on
+  `local/cartesia-2.4.6` (`7ec172600`) with data in `C:\dev\Marinara-Data`;
+  `Marinara-Custom`'s `custom/agent-turn` (`3050e9a40`) is one undeployed commit
+  ahead and exists only locally. Port 7900 is free; no automatic logon.
+- **Observed on a scratch Marinara:** a projected build in
+  `gameCharacterCards[].rulesetSheet`, a fitness metadata key and a UI-path
+  inventory grant all survived regenerate, swipe switch, continue and a later
+  turn's regenerate (`harness/checks/swipe-persistence.mjs`, 15/15).
+- **Source-traced:** metadata writes are whole-array last-writer-wins; inventory
+  rewind is a latest-turn heuristic; the locked-result record should key on the
+  player's user message.
+- **Pending:** device capture. adb is installed on den-agents; the devices are
+  not connected yet.
+
+Playtest harness: mock game master, scratch-Marinara launcher, den-serve manifest,
+playtest profile `lore-fitness-marinara` (a session booted and rendered the
+Marinara home screen, then was stopped) and persona definitions. Not yet built:
+scripted persona sessions, scratch ledger, real-model connection.
+
+Validation: the swipe-persistence check above; link/anchor check of all
+Markdown. No fitness service or native app exists yet, and nothing was installed
+on den-lore.

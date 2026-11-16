@@ -1,0 +1,20 @@
+{
+  "project": "lore-fitness-marinara",
+  "serve": {
+    "command": "bash harness/scripts/serve-scratch-marinara.sh --host {host} --port {port} --data {session_dir}/scratch",
+    "preferredPort": 0,
+    "healthUrl": "/",
+    "startupTimeout": "180s",
+    "reusePolicy": "broker_owned",
+    "readyText": "Marinara Engine"
+  },
+  "playtest": {
+    "startPath": "/",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "headed": false,
+    "recordVideo": false
+  }
+}
