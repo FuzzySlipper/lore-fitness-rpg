@@ -26,7 +26,7 @@ throughout development.
 | 2 | [Durable activity and progression mechanics](docs/02-durable-mechanics.md) |
 | 3 | [Marinara campaign and DSH integration](docs/03-marinara-integration.md) |
 | 4 | [Android and Wear OS companions](docs/04-phone-and-watch.md) |
-| 5 | [Complete Inquisition campaign](docs/05-campaign-season.md) |
+| 5 | [Inquisition ruleset and complete campaign](docs/05-campaign-season.md) |
 | 6 | [Stabilization, deployment and first playtest release](docs/06-stabilization-and-release.md) |
 
 ## Deployment and devices

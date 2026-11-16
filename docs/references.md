@@ -1,6 +1,6 @@
 # Platform and source references
 
-Inspected: 2026-11-15. These findings explain the starting plan. Recheck owning
+Inspected: 2026-11-15; Marinara Game Mode docs rechecked 2026-11-16. These findings explain the starting plan. Recheck owning
 source and installed device capabilities before implementing a dependency.
 
 ## Project direction
@@ -34,6 +34,12 @@ commit `3050e9a406c4ab23279b9e0b4fb067c2db252047` at inspection.
 | Storage | `docs/development/file-storage.md` | File-native persistence; do not assume an external SQL database in Marinara |
 | Extensions | `packages/server/src/services/extensions/personal-extension-sandbox.ts` | Personal server extension backend unavailable on Windows |
 | Android wrapper | `android/README.md` | Termux bootstrap and WebView, not a health-data companion |
+| Progression | `docs/development/game-rulesets-and-sheets-implementation.md` (XP/milestones decision; storage table) | The sheet stores XP but nothing awards it; level-up is manual; automated level-up is out of v1 |
+| Swipe rewind | Same file, "Storage: build versus live"; `docs/game/party-and-npcs.md` | Game build (`chat.metadata.gameCharacterCards[].rulesetSheet`) does not rewind with swipes; live values (`game_state_snapshots.ruleset_live`) do |
+| Checkpoints | `docs/game/sessions-and-saves.md` | Checkpoints are recorded at session start/end and combat start/end, with no in-app restore |
+| Dice on swipe | `docs/game/dice-and-skill-checks.md` | Regenerating normally rolls a new set; the pre-thrown dice queue gives swipe, regenerate and continue the same values |
+| Rulesets | `docs/extending/writing-rulesets.md`; `docs/extending/ruleset.schema.json`; `docs/examples/rulesets/` | Supported custom ruleset packages: sheets, catalogs, items, checks and ruleset-resolved combat |
+| Game master ownership | `docs/game/party-and-npcs.md` | The game master writes the general sheet and adds/removes inventory as the story goes |
 
 `LOCAL-PATCHES.md` named an older installed branch at inspection. Verify Git
 directly rather than replacing the active custom branch based on that note.
@@ -80,3 +86,5 @@ As checked on 2026-11-15, Play Console charges a US$25 one-time registration fee
 internal testing supports up to 100 testers, and new personal accounts have a
 separate 12-tester/14-day closed-test requirement before applying for public
 production access. No account enrollment, purchase or upload has occurred here.
+Play distribution was dropped for the household release on 2026-11-16 in favor
+of sideloaded APKs; these links remain for any later wider release.

@@ -35,14 +35,21 @@ begin as planned; the documentation scaffold is not evidence of working features
   and DSH installations. This is Patch's chosen topology.
 - Aim for a complete first campaign playtest. Run engineering tests and narrow
   device checks throughout implementation; do not present a partial prototype
-  as the first finished testing release.
-- Earned real activity survives chat regeneration, swipes and campaign restores.
-  Code owns grants and balances; narration consumes committed facts.
+  as the first finished testing release. Lore tests only the complete experience;
+  internal agent playtests stand in for early feedback.
+- Choose sensible defaults instead of asking Patch or Lore for guidance on
+  unresolved details. Record each default in the relevant stage file and keep
+  building; Patch prefers rolled-back work to open TBDs.
+- Earned real activity survives chat regeneration, swipes and backup restores.
+  Code owns grants and balances; narration consumes committed facts. Mechanical
+  results are committed before narration, and swipes rewrite only the prose.
 - Reuse supported Marinara dice, ruleset and combat functionality. Clearly mark
   proposed interfaces and implement them before depending on them. In the
   inspected revision, `update_game_state` only changes location/time.
-- Keep the integration with Marinara focused and use the existing DSH runtime.
-  Read those repositories' own instructions before editing them. Preserve their
+- Keep Marinara changes in a modular fitness module where practical. Deeper Game
+  Mode changes are acceptable when the functionality needs them; upstreaming is
+  not required. DSH is an optional per-game enhancement. Read those
+  repositories' own instructions before editing them. Preserve their
   customizations and existing user data.
 - Keep code and process proportionate to one household. Security hardening,
   hostile-user scenarios and enterprise isolation are not default work.
@@ -51,6 +58,8 @@ begin as planned; the documentation scaffold is not evidence of working features
   useful action can still succeed.
 - Recovery, accessible activity alternatives and missed-day paths are first-class
   gameplay. Do not reward escalating exercise intensity or hydration volume.
+- The watch is an engagement feature for Lore, who loves gadgets; playful watch
+  interactions are in scope even where OHealth already records the data.
 
 ## Verification and public files
 
