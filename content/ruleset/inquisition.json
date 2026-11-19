@@ -1,0 +1,2100 @@
+{
+  "$comment": "Inquisition: a Dragon Age-themed Game Mode ruleset for the Lore fitness RPG. Fan-made, original rules text; not an official system. The fields level, xp, supplies, training and rerolls are written by the fitness module from the player's real activity (see docs/03 and docs/05 in lore-fitness-rpg).",
+  "schemaVersion": 1,
+  "id": "inquisition",
+  "version": 1,
+  "name": "Inquisition (fitness campaign)",
+  "edition": "Season one, rules version 1",
+  "license": {
+    "spdx": "CC-BY-4.0",
+    "attribution": "Original rules for the Lore fitness RPG. Dragon Age names belong to their owners; this is unofficial fan work."
+  },
+  "coverage": {
+    "checks": true,
+    "saves": true,
+    "sheet": true,
+    "resources": true,
+    "rests": true,
+    "combat": true,
+    "summary": "d20 plus an attribute against a difficulty; level, supplies and training come from real-world activity and make the Inquisitor tougher and sharper in a fight."
+  },
+  "resolution": {
+    "kind": "dice-sum",
+    "dice": {
+      "count": 1,
+      "sides": 20
+    },
+    "abilityModifier": {
+      "op": "identity"
+    },
+    "proficiencyTiers": [
+      {
+        "id": "untrained",
+        "label": "Untrained"
+      },
+      {
+        "id": "trained",
+        "label": "Trained",
+        "flat": 2
+      },
+      {
+        "id": "expert",
+        "label": "Expert",
+        "flat": 4
+      }
+    ],
+    "advantage": true,
+    "naturals": {
+      "check": "both",
+      "save": "both"
+    },
+    "adjust": [
+      {
+        "value": {
+          "derived": "seasoned"
+        },
+        "abilities": [
+          "strength",
+          "dexterity",
+          "magic",
+          "cunning",
+          "willpower",
+          "constitution"
+        ]
+      }
+    ],
+    "difficultyLadder": [
+      {
+        "label": "Routine",
+        "dc": 8
+      },
+      {
+        "label": "Hard",
+        "dc": 12
+      },
+      {
+        "label": "Daunting",
+        "dc": 16
+      },
+      {
+        "label": "Legendary",
+        "dc": 20
+      }
+    ]
+  },
+  "sheet": {
+    "version": 1,
+    "sections": [
+      {
+        "id": "inquisitor",
+        "label": "The Inquisitor"
+      },
+      {
+        "id": "preparation",
+        "label": "Preparation (from your fitness journal)"
+      },
+      {
+        "id": "talents",
+        "label": "Talents"
+      }
+    ],
+    "abilities": [
+      {
+        "id": "strength",
+        "label": "Strength",
+        "short": "STR",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      },
+      {
+        "id": "dexterity",
+        "label": "Dexterity",
+        "short": "DEX",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      },
+      {
+        "id": "magic",
+        "label": "Magic",
+        "short": "MAG",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      },
+      {
+        "id": "cunning",
+        "label": "Cunning",
+        "short": "CUN",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      },
+      {
+        "id": "willpower",
+        "label": "Willpower",
+        "short": "WIL",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      },
+      {
+        "id": "constitution",
+        "label": "Constitution",
+        "short": "CON",
+        "min": -1,
+        "max": 6,
+        "default": 1
+      }
+    ],
+    "skills": [
+      {
+        "id": "athletics",
+        "label": "Athletics",
+        "ability": "strength"
+      },
+      {
+        "id": "intimidation",
+        "label": "Intimidation",
+        "ability": "strength"
+      },
+      {
+        "id": "stealth",
+        "label": "Stealth",
+        "ability": "dexterity"
+      },
+      {
+        "id": "acrobatics",
+        "label": "Acrobatics",
+        "ability": "dexterity"
+      },
+      {
+        "id": "arcana",
+        "label": "Arcana and the Fade",
+        "ability": "magic",
+        "untrained": {
+          "by": -2
+        }
+      },
+      {
+        "id": "lore",
+        "label": "Lore and history",
+        "ability": "cunning"
+      },
+      {
+        "id": "perception",
+        "label": "Perception",
+        "ability": "cunning"
+      },
+      {
+        "id": "persuasion",
+        "label": "Persuasion",
+        "ability": "willpower"
+      },
+      {
+        "id": "survival",
+        "label": "Survival",
+        "ability": "constitution"
+      },
+      {
+        "id": "medicine",
+        "label": "Field medicine",
+        "ability": "cunning"
+      }
+    ],
+    "saves": [
+      {
+        "id": "fortitude",
+        "label": "Fortitude",
+        "ability": "constitution"
+      },
+      {
+        "id": "reflex",
+        "label": "Reflex",
+        "ability": "dexterity"
+      },
+      {
+        "id": "resolve",
+        "label": "Resolve",
+        "ability": "willpower"
+      }
+    ],
+    "fields": [
+      {
+        "id": "class",
+        "label": "Class",
+        "type": "enum",
+        "values": [
+          "warrior",
+          "rogue",
+          "mage"
+        ],
+        "valueLabels": {
+          "warrior": "Warrior",
+          "rogue": "Rogue",
+          "mage": "Mage"
+        },
+        "default": "warrior",
+        "section": "inquisitor"
+      },
+      {
+        "id": "specialization",
+        "label": "Specialization",
+        "type": "enum",
+        "values": [
+          "none",
+          "champion",
+          "reaver",
+          "templar",
+          "assassin",
+          "artificer",
+          "tempest",
+          "knight_enchanter",
+          "necromancer",
+          "rift_mage"
+        ],
+        "valueLabels": {
+          "none": "Not yet chosen",
+          "champion": "Champion",
+          "reaver": "Reaver",
+          "templar": "Templar",
+          "assassin": "Assassin",
+          "artificer": "Artificer",
+          "tempest": "Tempest",
+          "knight_enchanter": "Knight-Enchanter",
+          "necromancer": "Necromancer",
+          "rift_mage": "Rift Mage"
+        },
+        "default": "none",
+        "section": "inquisitor"
+      },
+      {
+        "id": "race",
+        "label": "Race",
+        "type": "enum",
+        "values": [
+          "human",
+          "elf",
+          "dwarf",
+          "qunari"
+        ],
+        "valueLabels": {
+          "human": "Human",
+          "elf": "Elf",
+          "dwarf": "Dwarf",
+          "qunari": "Qunari (Vashoth)"
+        },
+        "default": "human",
+        "section": "inquisitor"
+      },
+      {
+        "id": "pronouns",
+        "label": "Pronouns",
+        "type": "text",
+        "maxLength": 30,
+        "section": "inquisitor"
+      },
+      {
+        "id": "background",
+        "label": "Background",
+        "type": "text",
+        "maxLength": 120,
+        "section": "inquisitor"
+      },
+      {
+        "id": "level",
+        "label": "Level",
+        "type": "number",
+        "min": 1,
+        "max": 20,
+        "default": 1,
+        "section": "preparation"
+      },
+      {
+        "id": "xp",
+        "label": "Experience",
+        "type": "number",
+        "min": 0,
+        "max": 100000,
+        "default": 0,
+        "section": "preparation"
+      },
+      {
+        "id": "supplies",
+        "label": "Supplies",
+        "type": "number",
+        "min": -99,
+        "max": 999,
+        "default": 0,
+        "section": "preparation"
+      },
+      {
+        "id": "training",
+        "label": "Training",
+        "type": "number",
+        "min": -99,
+        "max": 999,
+        "default": 0,
+        "section": "preparation"
+      },
+      {
+        "id": "rerolls",
+        "label": "Fade-touched second chances",
+        "type": "number",
+        "min": -9,
+        "max": 99,
+        "default": 0,
+        "section": "preparation"
+      }
+    ],
+    "derived": [
+      {
+        "id": "seasoned",
+        "label": "Seasoned (level bonus to checks and attacks)",
+        "op": "stepTable",
+        "from": {
+          "field": "level"
+        },
+        "table": [
+          [
+            1,
+            0
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            8,
+            2
+          ],
+          [
+            12,
+            3
+          ],
+          [
+            16,
+            4
+          ]
+        ],
+        "section": "preparation"
+      },
+      {
+        "id": "drilled",
+        "label": "Drilled (unspent training on attacks)",
+        "op": "stepTable",
+        "from": {
+          "field": "training"
+        },
+        "table": [
+          [
+            -99,
+            0
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            8,
+            2
+          ]
+        ],
+        "section": "preparation"
+      },
+      {
+        "id": "provisioned",
+        "label": "Provisioned (unspent supplies on health)",
+        "op": "stepTable",
+        "from": {
+          "field": "supplies"
+        },
+        "table": [
+          [
+            -99,
+            0
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            10,
+            8
+          ],
+          [
+            15,
+            12
+          ]
+        ],
+        "section": "preparation"
+      },
+      {
+        "id": "health_from_constitution",
+        "label": "Health from Constitution",
+        "op": "scale",
+        "of": {
+          "abilityMod": "constitution"
+        },
+        "multiplier": 4,
+        "section": "inquisitor"
+      },
+      {
+        "id": "health_from_level",
+        "label": "Health from level",
+        "op": "scale",
+        "of": {
+          "field": "level"
+        },
+        "multiplier": 5,
+        "section": "inquisitor"
+      },
+      {
+        "id": "health_max",
+        "label": "Health",
+        "op": "sum",
+        "of": [
+          {
+            "const": 20
+          },
+          {
+            "derived": "health_from_constitution"
+          },
+          {
+            "derived": "health_from_level"
+          },
+          {
+            "derived": "provisioned"
+          }
+        ],
+        "section": "inquisitor"
+      },
+      {
+        "id": "guard",
+        "label": "Defense",
+        "op": "sum",
+        "of": [
+          {
+            "const": 10
+          },
+          {
+            "abilityMod": "dexterity"
+          },
+          {
+            "itemStat": {
+              "stat": "armor",
+              "from": "worn",
+              "pick": "sum"
+            }
+          }
+        ],
+        "section": "inquisitor"
+      },
+      {
+        "id": "focus_max",
+        "label": "Focus",
+        "op": "stepTable",
+        "from": {
+          "field": "level"
+        },
+        "table": [
+          [
+            1,
+            1
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            12,
+            3
+          ]
+        ],
+        "section": "inquisitor"
+      }
+    ],
+    "lists": [
+      {
+        "id": "talents",
+        "label": "Talents",
+        "section": "talents",
+        "maxItems": 24,
+        "columns": [
+          {
+            "id": "name",
+            "label": "Name",
+            "type": "text",
+            "maxLength": 60,
+            "required": true
+          },
+          {
+            "id": "tree",
+            "label": "Tree",
+            "type": "text",
+            "maxLength": 40
+          },
+          {
+            "id": "notes",
+            "label": "What it does",
+            "type": "text",
+            "maxLength": 200
+          },
+          {
+            "id": "damage",
+            "label": "Damage dice",
+            "type": "dice",
+            "example": "2d6"
+          },
+          {
+            "id": "uses_focus",
+            "label": "Spends focus",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    ],
+    "live": {
+      "pools": [
+        {
+          "id": "health",
+          "label": "Health",
+          "max": {
+            "derived": "health_max"
+          }
+        },
+        {
+          "id": "stamina",
+          "label": "Stamina or mana",
+          "max": {
+            "const": 10
+          }
+        },
+        {
+          "id": "focus",
+          "label": "Focus",
+          "max": {
+            "derived": "focus_max"
+          }
+        }
+      ],
+      "conditions": [
+        {
+          "id": "stunned",
+          "label": "Stunned"
+        },
+        {
+          "id": "knocked_down",
+          "label": "Knocked down"
+        },
+        {
+          "id": "weakened",
+          "label": "Weakened"
+        },
+        {
+          "id": "burning",
+          "label": "Burning"
+        },
+        {
+          "id": "chilled",
+          "label": "Chilled"
+        },
+        {
+          "id": "marked",
+          "label": "Marked"
+        },
+        {
+          "id": "hidden",
+          "label": "Hidden"
+        },
+        {
+          "id": "guarded",
+          "label": "Guarded"
+        }
+      ]
+    }
+  },
+  "rests": [
+    {
+      "id": "camp",
+      "label": "Rest at an Inquisition camp",
+      "restore": [
+        {
+          "pool": "health",
+          "to": "max"
+        },
+        {
+          "pool": "stamina",
+          "to": "max"
+        },
+        {
+          "pool": "focus",
+          "to": "max"
+        }
+      ],
+      "clear": {
+        "conditions": [
+          "stunned",
+          "knocked_down",
+          "weakened",
+          "burning",
+          "chilled",
+          "marked"
+        ]
+      }
+    },
+    {
+      "id": "breather",
+      "label": "Catch your breath",
+      "restore": [
+        {
+          "pool": "stamina",
+          "to": "max"
+        }
+      ],
+      "clear": {
+        "conditions": [
+          "stunned",
+          "knocked_down"
+        ]
+      }
+    }
+  ],
+  "gm": {
+    "checkGuidance": "This game uses the Inquisition rules. When a risky action could go more than one way, call for a check with a skill or save from the sheet and pick a difficulty from the ladder. The Engine rolls a d20 and adds the sheet's numbers; never write the result yourself. Grant advantage for good preparation, a companion's help or clever use of the scene.",
+    "sheetGuidance": "The sheets are authoritative. Level, Experience, Supplies, Training and Fade-touched second chances come from the player's real training through the fitness journal: never change them with sheet commands and never invent rewards; the turn's fitness facts say what was earned or spent. Spend health, stamina or mana and focus as the fiction demands. Unspent training sharpens attacks and unspent supplies add health, so spending them at the war table trades a little readiness for progress elsewhere.",
+    "sheetSummary": {
+      "fields": [
+        "class",
+        "specialization",
+        "race",
+        "level",
+        "supplies",
+        "training",
+        "rerolls"
+      ],
+      "derived": [
+        "health_max",
+        "guard",
+        "seasoned",
+        "drilled"
+      ],
+      "lists": [
+        {
+          "list": "talents",
+          "nameColumn": "name",
+          "columns": [
+            "tree"
+          ]
+        }
+      ]
+    }
+  },
+  "items": {
+    "categories": [
+      {
+        "id": "weapon",
+        "label": "Weapon"
+      },
+      {
+        "id": "armor",
+        "label": "Armor"
+      },
+      {
+        "id": "potion",
+        "label": "Potion or grenade"
+      },
+      {
+        "id": "material",
+        "label": "Crafting material"
+      },
+      {
+        "id": "gear",
+        "label": "Gear"
+      }
+    ],
+    "rarities": [
+      {
+        "id": "common",
+        "label": "Common"
+      },
+      {
+        "id": "masterwork",
+        "label": "Masterwork"
+      },
+      {
+        "id": "unique",
+        "label": "Unique"
+      }
+    ],
+    "tags": [
+      {
+        "id": "ranged",
+        "label": "Ranged"
+      },
+      {
+        "id": "two_handed",
+        "label": "Two-handed"
+      },
+      {
+        "id": "shield",
+        "label": "Shield"
+      },
+      {
+        "id": "staff",
+        "label": "Staff"
+      }
+    ],
+    "stats": [
+      {
+        "id": "armor",
+        "label": "Armor",
+        "type": "number",
+        "min": 0,
+        "max": 6,
+        "default": 0
+      },
+      {
+        "id": "damage",
+        "label": "Damage",
+        "type": "dice",
+        "example": "1d8"
+      },
+      {
+        "id": "swing",
+        "label": "Rolls with",
+        "type": "enum",
+        "values": [
+          "strength",
+          "dexterity",
+          "magic"
+        ],
+        "default": "strength"
+      }
+    ],
+    "slots": [
+      {
+        "id": "body",
+        "label": "Body",
+        "count": 1
+      },
+      {
+        "id": "hands",
+        "label": "Hands",
+        "count": 2
+      }
+    ],
+    "currencies": [
+      {
+        "id": "coin",
+        "label": "Coin",
+        "units": [
+          {
+            "id": "copper",
+            "label": "coppers",
+            "value": 1
+          },
+          {
+            "id": "silver",
+            "label": "silvers",
+            "value": 100
+          },
+          {
+            "id": "gold",
+            "label": "gold",
+            "value": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "catalogs": [
+    {
+      "$comment": "Talents by class and tree. The level filter is the level a talent becomes available; level comes from the fitness journal.",
+      "id": "talent_trees",
+      "label": "Talents",
+      "feeds": [
+        "talents"
+      ],
+      "filters": [
+        {
+          "id": "class",
+          "label": "Class",
+          "type": "tags",
+          "startFrom": {
+            "field": "class"
+          }
+        },
+        {
+          "id": "level",
+          "label": "Available from level",
+          "type": "number"
+        }
+      ],
+      "entries": [
+        {
+          "id": "shield-wall",
+          "label": "Shield Wall",
+          "summary": "Plant the shield and let the blow come.",
+          "filters": {
+            "class": [
+              "warrior"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Shield Wall",
+                "tree": "Weapon and Shield",
+                "notes": "Gain Guarded until your next turn: attacks against you are at disadvantage.",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "war-cry",
+          "label": "War Cry",
+          "summary": "A shout that turns heads toward you.",
+          "filters": {
+            "class": [
+              "warrior"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "War Cry",
+                "tree": "Battlemaster",
+                "notes": "Nearby enemies are Weakened and turn their attention to you for a round.",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "mighty-blow",
+          "label": "Mighty Blow",
+          "summary": "One overhead strike with everything behind it.",
+          "filters": {
+            "class": [
+              "warrior"
+            ],
+            "level": 3
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Mighty Blow",
+                "tree": "Two-Handed",
+                "notes": "A heavy strike that knocks a staggered foe down.",
+                "damage": "2d8",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "rally",
+          "label": "Rally",
+          "summary": "Steady the whole line.",
+          "filters": {
+            "class": [
+              "warrior"
+            ],
+            "level": 6
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Rally",
+                "tree": "Battlemaster",
+                "notes": "Spend focus: every ally gains Guarded and recovers 2 stamina.",
+                "uses_focus": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "long-shot",
+          "label": "Long Shot",
+          "summary": "Patience, breath, release.",
+          "filters": {
+            "class": [
+              "rogue"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Long Shot",
+                "tree": "Archery",
+                "notes": "A careful bow shot that deals more the farther the target is.",
+                "damage": "1d10",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "stealth-step",
+          "label": "Into the Shadows",
+          "summary": "Gone before anyone looks twice.",
+          "filters": {
+            "class": [
+              "rogue"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Into the Shadows",
+                "tree": "Subterfuge",
+                "notes": "Become Hidden; your next attack from hiding has advantage.",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "twin-fangs",
+          "label": "Twin Fangs",
+          "summary": "Two daggers, one heartbeat.",
+          "filters": {
+            "class": [
+              "rogue"
+            ],
+            "level": 3
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Twin Fangs",
+                "tree": "Double Daggers",
+                "notes": "A paired strike that hits harder against a foe that is Marked or knocked down.",
+                "damage": "2d6",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "thousand-cuts",
+          "label": "Flurry of a Thousand Cuts",
+          "summary": "Everything at once, everywhere.",
+          "filters": {
+            "class": [
+              "rogue"
+            ],
+            "level": 6
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Flurry of a Thousand Cuts",
+                "tree": "Double Daggers",
+                "notes": "Spend focus: strike every enemy within reach.",
+                "damage": "3d6",
+                "uses_focus": true
+              }
+            }
+          ]
+        },
+        {
+          "id": "barrier",
+          "label": "Barrier",
+          "summary": "A shimmer of will around your friends.",
+          "filters": {
+            "class": [
+              "mage"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Barrier",
+                "tree": "Spirit",
+                "notes": "You and nearby allies gain Guarded until your next turn.",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "fire-mine",
+          "label": "Fire Mine",
+          "summary": "A glyph that waits.",
+          "filters": {
+            "class": [
+              "mage"
+            ],
+            "level": 1
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Fire Mine",
+                "tree": "Inferno",
+                "notes": "A glyph that bursts when an enemy crosses it, leaving them Burning.",
+                "damage": "2d6",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "winters-grasp",
+          "label": "Winter's Grasp",
+          "summary": "Frost that holds as well as it hurts.",
+          "filters": {
+            "class": [
+              "mage"
+            ],
+            "level": 3
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Winter's Grasp",
+                "tree": "Winter",
+                "notes": "Freeze one foe: they are Chilled and cannot move on their next turn.",
+                "damage": "1d8",
+                "uses_focus": false
+              }
+            }
+          ]
+        },
+        {
+          "id": "chain-lightning",
+          "label": "Chain Lightning",
+          "summary": "It jumps, and it keeps jumping.",
+          "filters": {
+            "class": [
+              "mage"
+            ],
+            "level": 6
+          },
+          "rows": [
+            {
+              "list": "talents",
+              "values": {
+                "name": "Chain Lightning",
+                "tree": "Storm",
+                "notes": "Spend focus: lightning arcs through up to four enemies.",
+                "damage": "3d6",
+                "uses_focus": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "$comment": "Season one opponents: Venatori, Red Templars, demons from the rifts and Corypheus's lieutenants.",
+      "id": "opponents",
+      "label": "Opponents",
+      "holds": "creatures",
+      "filters": [
+        {
+          "id": "faction",
+          "label": "Faction",
+          "type": "text"
+        },
+        {
+          "id": "tier",
+          "label": "Threat",
+          "type": "text"
+        }
+      ],
+      "entries": [
+        {
+          "id": "shade",
+          "label": "Shade",
+          "summary": "A rift demon that drifts like smoke and strikes like a lash.",
+          "filters": {
+            "faction": "Demons",
+            "tier": "Skirmish"
+          },
+          "creature": {
+            "health": 14,
+            "defense": 11,
+            "initiativeModifier": 1,
+            "speed": 10,
+            "abilities": {
+              "strength": 1,
+              "dexterity": 1,
+              "magic": 1,
+              "cunning": 0,
+              "willpower": 0,
+              "constitution": 1
+            },
+            "tier": "skirmish",
+            "actions": [
+              {
+                "id": "lash",
+                "name": "Shadow lash",
+                "budget": "act",
+                "toHit": 3,
+                "damage": {
+                  "dice": "1d8",
+                  "type": "spirit"
+                },
+                "reach": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "wraith",
+          "label": "Wraith",
+          "summary": "A flickering spirit that hurls bolts of Fade-stuff from a distance.",
+          "filters": {
+            "faction": "Demons",
+            "tier": "Skirmish"
+          },
+          "creature": {
+            "health": 10,
+            "defense": 12,
+            "initiativeModifier": 3,
+            "speed": 10,
+            "abilities": {
+              "strength": -1,
+              "dexterity": 2,
+              "magic": 2,
+              "cunning": 0,
+              "willpower": 1,
+              "constitution": 0
+            },
+            "tier": "skirmish",
+            "actions": [
+              {
+                "id": "bolt",
+                "name": "Fade bolt",
+                "budget": "act",
+                "toHit": 4,
+                "damage": {
+                  "dice": "1d6",
+                  "type": "spirit"
+                },
+                "reach": 12
+              }
+            ]
+          }
+        },
+        {
+          "id": "despair-demon",
+          "label": "Despair Demon",
+          "summary": "Cold follows it; so does the urge to give up.",
+          "filters": {
+            "faction": "Demons",
+            "tier": "Dangerous"
+          },
+          "creature": {
+            "health": 26,
+            "defense": 13,
+            "initiativeModifier": 2,
+            "speed": 10,
+            "abilities": {
+              "strength": 0,
+              "dexterity": 2,
+              "magic": 3,
+              "cunning": 1,
+              "willpower": 2,
+              "constitution": 1
+            },
+            "tier": "dangerous",
+            "actions": [
+              {
+                "id": "frost",
+                "name": "Breath of despair",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "2d6",
+                  "type": "cold"
+                },
+                "reach": 8,
+                "applies": [
+                  {
+                    "condition": "chilled",
+                    "duration": {
+                      "rounds": 1
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "rage-demon",
+          "label": "Rage Demon",
+          "summary": "A walking furnace that loves to be close.",
+          "filters": {
+            "faction": "Demons",
+            "tier": "Dangerous"
+          },
+          "creature": {
+            "health": 32,
+            "defense": 12,
+            "initiativeModifier": 0,
+            "speed": 8,
+            "abilities": {
+              "strength": 3,
+              "dexterity": 0,
+              "magic": 2,
+              "cunning": -1,
+              "willpower": 1,
+              "constitution": 3
+            },
+            "tier": "dangerous",
+            "actions": [
+              {
+                "id": "burn",
+                "name": "Searing grasp",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "2d8",
+                  "type": "fire"
+                },
+                "reach": 2,
+                "applies": [
+                  {
+                    "condition": "burning",
+                    "duration": {
+                      "rounds": 2
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "venatori-gladiator",
+          "label": "Venatori Gladiator",
+          "summary": "A Tevinter cultist trained for the arena and sold on Corypheus's promises.",
+          "filters": {
+            "faction": "Venatori",
+            "tier": "Skirmish"
+          },
+          "creature": {
+            "health": 20,
+            "defense": 13,
+            "initiativeModifier": 1,
+            "speed": 10,
+            "abilities": {
+              "strength": 3,
+              "dexterity": 1,
+              "magic": 0,
+              "cunning": 0,
+              "willpower": 1,
+              "constitution": 2
+            },
+            "tier": "skirmish",
+            "actions": [
+              {
+                "id": "cleave",
+                "name": "Greatsword cleave",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "1d12",
+                  "type": "slashing"
+                },
+                "reach": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "venatori-spellbinder",
+          "label": "Venatori Spellbinder",
+          "summary": "A magister's apprentice who fights from behind a barrier and a sneer.",
+          "filters": {
+            "faction": "Venatori",
+            "tier": "Skirmish"
+          },
+          "creature": {
+            "health": 16,
+            "defense": 12,
+            "initiativeModifier": 2,
+            "speed": 10,
+            "abilities": {
+              "strength": -1,
+              "dexterity": 1,
+              "magic": 4,
+              "cunning": 2,
+              "willpower": 2,
+              "constitution": 0
+            },
+            "tier": "skirmish",
+            "actions": [
+              {
+                "id": "bolt",
+                "name": "Lightning bolt",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "1d10",
+                  "type": "lightning"
+                },
+                "reach": 12
+              }
+            ]
+          }
+        },
+        {
+          "id": "red-templar",
+          "label": "Red Templar",
+          "summary": "A templar whose loyalty, and blood, now glow red.",
+          "filters": {
+            "faction": "Red Templars",
+            "tier": "Skirmish"
+          },
+          "creature": {
+            "health": 22,
+            "defense": 14,
+            "initiativeModifier": 0,
+            "speed": 8,
+            "abilities": {
+              "strength": 3,
+              "dexterity": 0,
+              "magic": -1,
+              "cunning": 0,
+              "willpower": 2,
+              "constitution": 2
+            },
+            "tier": "skirmish",
+            "actions": [
+              {
+                "id": "strike",
+                "name": "Red lyrium blade",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "1d10",
+                  "type": "slashing"
+                },
+                "reach": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "red-templar-horror",
+          "label": "Red Templar Horror",
+          "summary": "What a templar becomes after too much red lyrium: a shrieking husk that hurls shards.",
+          "filters": {
+            "faction": "Red Templars",
+            "tier": "Dangerous"
+          },
+          "creature": {
+            "health": 28,
+            "defense": 12,
+            "initiativeModifier": 1,
+            "speed": 6,
+            "abilities": {
+              "strength": 2,
+              "dexterity": 0,
+              "magic": 2,
+              "cunning": -1,
+              "willpower": 3,
+              "constitution": 3
+            },
+            "tier": "dangerous",
+            "actions": [
+              {
+                "id": "shard",
+                "name": "Red lyrium shard",
+                "budget": "act",
+                "toHit": 5,
+                "damage": {
+                  "dice": "2d6",
+                  "type": "spirit"
+                },
+                "reach": 12
+              },
+              {
+                "id": "scream",
+                "name": "Scream",
+                "budget": "act",
+                "autoHit": true,
+                "damage": {
+                  "dice": "1d6",
+                  "type": "spirit"
+                },
+                "targetCount": 3,
+                "applies": [
+                  {
+                    "condition": "stunned",
+                    "duration": {
+                      "rounds": 1
+                    }
+                  }
+                ],
+                "recharge": {
+                  "dice": {
+                    "count": 1,
+                    "sides": 6
+                  },
+                  "from": 5
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "red-templar-behemoth",
+          "label": "Red Templar Behemoth",
+          "summary": "A mountain of red crystal that was once a person, swinging an arm like a battering ram.",
+          "filters": {
+            "faction": "Red Templars",
+            "tier": "Boss"
+          },
+          "creature": {
+            "health": 70,
+            "defense": 14,
+            "initiativeModifier": -1,
+            "speed": 6,
+            "abilities": {
+              "strength": 5,
+              "dexterity": -1,
+              "magic": 1,
+              "cunning": -1,
+              "willpower": 3,
+              "constitution": 5
+            },
+            "tier": "boss",
+            "actions": [
+              {
+                "id": "slam",
+                "name": "Crystal slam",
+                "budget": "act",
+                "toHit": 7,
+                "damage": {
+                  "dice": "3d8",
+                  "type": "bludgeoning"
+                },
+                "reach": 3,
+                "applies": [
+                  {
+                    "condition": "knocked_down",
+                    "duration": {
+                      "rounds": 1
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "envy-shade",
+          "label": "Corypheus's Lieutenant (Venatori Magister)",
+          "summary": "A magister who leads Corypheus's forces in the field and expects to be obeyed.",
+          "filters": {
+            "faction": "Venatori",
+            "tier": "Boss"
+          },
+          "creature": {
+            "health": 60,
+            "defense": 15,
+            "initiativeModifier": 3,
+            "speed": 10,
+            "abilities": {
+              "strength": 0,
+              "dexterity": 2,
+              "magic": 5,
+              "cunning": 3,
+              "willpower": 4,
+              "constitution": 2
+            },
+            "tier": "boss",
+            "actions": [
+              {
+                "id": "blood",
+                "name": "Blood magic lance",
+                "budget": "act",
+                "toHit": 7,
+                "damage": {
+                  "dice": "2d10",
+                  "type": "spirit"
+                },
+                "reach": 12
+              },
+              {
+                "id": "rift",
+                "name": "Tear a rift",
+                "budget": "act",
+                "autoHit": true,
+                "damage": {
+                  "dice": "2d6",
+                  "type": "spirit"
+                },
+                "targetCount": 3,
+                "applies": [
+                  {
+                    "condition": "weakened",
+                    "duration": {
+                      "rounds": 2
+                    }
+                  }
+                ],
+                "recharge": {
+                  "dice": {
+                    "count": 1,
+                    "sides": 6
+                  },
+                  "from": 5
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "quartermaster",
+      "label": "Skyhold quartermaster",
+      "holds": "items",
+      "entries": [
+        {
+          "id": "longsword",
+          "label": "Inquisition longsword",
+          "summary": "Plain, sharp and well balanced.",
+          "item": {
+            "category": "weapon",
+            "rarity": "common",
+            "stats": {
+              "damage": "1d8",
+              "swing": "strength"
+            },
+            "slots": {
+              "hands": 1
+            },
+            "cost": {
+              "amount": 5,
+              "unit": "silver"
+            },
+            "attack": {
+              "budget": "act",
+              "toHit": {
+                "abilities": {
+                  "stat": "swing"
+                }
+              },
+              "damage": {
+                "dice": {
+                  "stat": "damage"
+                },
+                "abilities": {
+                  "stat": "swing"
+                },
+                "type": "slashing"
+              },
+              "reach": 2
+            }
+          }
+        },
+        {
+          "id": "greatsword",
+          "label": "Greatsword",
+          "summary": "Two hands, one purpose.",
+          "item": {
+            "category": "weapon",
+            "rarity": "common",
+            "tags": [
+              "two_handed"
+            ],
+            "stats": {
+              "damage": "1d12",
+              "swing": "strength"
+            },
+            "slots": {
+              "hands": 2
+            },
+            "cost": {
+              "amount": 9,
+              "unit": "silver"
+            },
+            "attack": {
+              "budget": "act",
+              "toHit": {
+                "abilities": {
+                  "stat": "swing"
+                }
+              },
+              "damage": {
+                "dice": {
+                  "stat": "damage"
+                },
+                "abilities": {
+                  "stat": "swing"
+                },
+                "type": "slashing"
+              },
+              "reach": 2
+            }
+          }
+        },
+        {
+          "id": "daggers",
+          "label": "Paired daggers",
+          "summary": "Quick, quiet and easy to hide.",
+          "item": {
+            "category": "weapon",
+            "rarity": "common",
+            "stats": {
+              "damage": "1d6",
+              "swing": "dexterity"
+            },
+            "slots": {
+              "hands": 2
+            },
+            "cost": {
+              "amount": 4,
+              "unit": "silver"
+            },
+            "attack": {
+              "budget": "act",
+              "toHit": {
+                "abilities": {
+                  "stat": "swing"
+                }
+              },
+              "damage": {
+                "dice": {
+                  "stat": "damage"
+                },
+                "abilities": {
+                  "stat": "swing"
+                },
+                "type": "piercing"
+              },
+              "reach": 2
+            }
+          }
+        },
+        {
+          "id": "longbow",
+          "label": "Longbow",
+          "summary": "Yew from the Hinterlands, strung tight.",
+          "item": {
+            "category": "weapon",
+            "rarity": "common",
+            "tags": [
+              "ranged",
+              "two_handed"
+            ],
+            "stats": {
+              "damage": "1d8",
+              "swing": "dexterity"
+            },
+            "slots": {
+              "hands": 2
+            },
+            "cost": {
+              "amount": 6,
+              "unit": "silver"
+            },
+            "attack": {
+              "budget": "act",
+              "toHit": {
+                "abilities": {
+                  "stat": "swing"
+                }
+              },
+              "damage": {
+                "dice": {
+                  "stat": "damage"
+                },
+                "abilities": {
+                  "stat": "swing"
+                },
+                "type": "piercing"
+              },
+              "reach": 2,
+              "range": {
+                "normal": 30,
+                "long": 60
+              }
+            }
+          }
+        },
+        {
+          "id": "staff",
+          "label": "Mage's staff",
+          "summary": "Oak and silverite, humming faintly.",
+          "item": {
+            "category": "weapon",
+            "rarity": "common",
+            "tags": [
+              "staff",
+              "two_handed"
+            ],
+            "stats": {
+              "damage": "1d8",
+              "swing": "magic"
+            },
+            "slots": {
+              "hands": 2
+            },
+            "cost": {
+              "amount": 7,
+              "unit": "silver"
+            },
+            "attack": {
+              "budget": "act",
+              "toHit": {
+                "abilities": {
+                  "stat": "swing"
+                }
+              },
+              "damage": {
+                "dice": {
+                  "stat": "damage"
+                },
+                "abilities": {
+                  "stat": "swing"
+                },
+                "type": "spirit"
+              },
+              "reach": 2,
+              "range": {
+                "normal": 20
+              }
+            }
+          }
+        },
+        {
+          "id": "shield",
+          "label": "Heater shield",
+          "summary": "Painted with the Inquisition's eye.",
+          "item": {
+            "category": "armor",
+            "rarity": "common",
+            "tags": [
+              "shield"
+            ],
+            "stats": {
+              "armor": 2
+            },
+            "slots": {
+              "hands": 1
+            },
+            "cost": {
+              "amount": 4,
+              "unit": "silver"
+            }
+          }
+        },
+        {
+          "id": "scout-leathers",
+          "label": "Scout leathers",
+          "summary": "Light enough to climb in.",
+          "item": {
+            "category": "armor",
+            "rarity": "common",
+            "stats": {
+              "armor": 1
+            },
+            "slots": {
+              "body": 1
+            },
+            "cost": {
+              "amount": 5,
+              "unit": "silver"
+            }
+          }
+        },
+        {
+          "id": "chainmail",
+          "label": "Inquisition chainmail",
+          "summary": "Heavy, and worth it.",
+          "item": {
+            "category": "armor",
+            "rarity": "common",
+            "stats": {
+              "armor": 3
+            },
+            "slots": {
+              "body": 1
+            },
+            "cost": {
+              "amount": 12,
+              "unit": "silver"
+            }
+          }
+        },
+        {
+          "id": "healing-potion",
+          "label": "Healing potion",
+          "summary": "Elfroot and something sharper; it tastes awful and works.",
+          "item": {
+            "category": "potion",
+            "rarity": "common",
+            "cost": {
+              "amount": 2,
+              "unit": "silver"
+            }
+          }
+        },
+        {
+          "id": "elfroot",
+          "label": "Elfroot",
+          "summary": "A common healing herb, gathered on expeditions.",
+          "item": {
+            "category": "material",
+            "rarity": "common",
+            "cost": {
+              "amount": 10,
+              "unit": "copper"
+            }
+          }
+        },
+        {
+          "id": "iron-ingot",
+          "label": "Iron",
+          "summary": "Smelted from ore found on expeditions; the smiths always want more.",
+          "item": {
+            "category": "material",
+            "rarity": "common",
+            "cost": {
+              "amount": 20,
+              "unit": "copper"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "combat": {
+    "$comment": "Fights are resolved by these rules. Preparation from real training appears here: level adds to attacks through Seasoned, unspent training through Drilled.",
+    "kind": "attack-vs-defense",
+    "health": {
+      "pool": "health"
+    },
+    "defense": {
+      "derived": "guard"
+    },
+    "initiative": {
+      "dice": {
+        "count": 1,
+        "sides": 20
+      },
+      "modifier": {
+        "abilityMod": "dexterity"
+      }
+    },
+    "attackRoll": {
+      "dice": {
+        "count": 1,
+        "sides": 20
+      }
+    },
+    "economy": {
+      "budgets": [
+        {
+          "id": "act",
+          "label": "Action",
+          "per": "turn",
+          "count": 1
+        }
+      ],
+      "movement": {
+        "const": 10
+      }
+    },
+    "distance": {
+      "label": "paces",
+      "perCell": 2
+    },
+    "abilities": [
+      {
+        "list": "talents",
+        "budget": "act"
+      }
+    ],
+    "standard": [
+      "dodge",
+      "help"
+    ],
+    "conditions": [
+      {
+        "condition": "stunned",
+        "effects": [
+          "cannot-act"
+        ]
+      },
+      {
+        "condition": "knocked_down",
+        "effects": [
+          "speed-zero"
+        ],
+        "modifiers": [
+          {
+            "to": "defense",
+            "flat": -2
+          }
+        ]
+      },
+      {
+        "condition": "weakened",
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": -2
+          }
+        ]
+      },
+      {
+        "condition": "chilled",
+        "modifiers": [
+          {
+            "to": "speed",
+            "times": 0.5
+          }
+        ]
+      },
+      {
+        "condition": "marked",
+        "modifiers": [
+          {
+            "to": "defense",
+            "flat": -2
+          }
+        ]
+      },
+      {
+        "condition": "guarded",
+        "modifiers": [
+          {
+            "to": "defense",
+            "flat": 2
+          }
+        ]
+      }
+    ],
+    "levels": [
+      {
+        "derived": "seasoned",
+        "at": 1,
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": 1
+          }
+        ]
+      },
+      {
+        "derived": "seasoned",
+        "at": 2,
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": 1
+          }
+        ]
+      },
+      {
+        "derived": "seasoned",
+        "at": 3,
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": 1
+          }
+        ]
+      },
+      {
+        "derived": "drilled",
+        "at": 1,
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": 1
+          }
+        ]
+      },
+      {
+        "derived": "drilled",
+        "at": 2,
+        "modifiers": [
+          {
+            "to": "attacks",
+            "flat": 1
+          }
+        ]
+      }
+    ],
+    "threat": {
+      "tiers": [
+        {
+          "id": "skirmish",
+          "label": "Skirmish",
+          "health": [
+            10,
+            22
+          ],
+          "defense": 12,
+          "toHit": 4,
+          "damagePerRound": [
+            4,
+            8
+          ],
+          "saveDifficulty": 12
+        },
+        {
+          "id": "dangerous",
+          "label": "Dangerous",
+          "health": [
+            22,
+            36
+          ],
+          "defense": 13,
+          "toHit": 5,
+          "damagePerRound": [
+            7,
+            12
+          ],
+          "saveDifficulty": 14
+        },
+        {
+          "id": "boss",
+          "label": "Boss",
+          "health": [
+            50,
+            80
+          ],
+          "defense": 15,
+          "toHit": 7,
+          "damagePerRound": [
+            10,
+            18
+          ],
+          "saveDifficulty": 16
+        }
+      ]
+    }
+  }
+}

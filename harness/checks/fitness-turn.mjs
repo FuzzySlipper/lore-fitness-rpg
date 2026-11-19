@@ -10,7 +10,9 @@
 //    thrown once with Marinara's dice; swipes add no grants.
 //
 // Usage: node fitness-turn.mjs --base http://127.0.0.1:7910 --ledger http://127.0.0.1:7912
-//          --mock-log DATA/mock-gm-requests.jsonl
+//          --mock-log DATA/mock-gm-requests.jsonl [--ruleset local/inquisition@1]
+// With --ruleset the game is pinned to that imported ruleset and the check also confirms the
+// Game Master's sheet block shows the fitness fields.
 // Synthetic fixture only.
 
 import assert from "node:assert/strict";
@@ -85,6 +87,7 @@ const persona = await api("POST", "/api/characters/personas", {
   name: "Evelyn Trevelyan",
   description: "Synthetic fixture Inquisitor.",
 });
+const [rulesetId, rulesetVersion] = (args.ruleset ?? "").split("@");
 const created = await api("POST", "/api/game/create", {
   name: `Fitness turn ${new Date().toISOString()}`,
   connectionId: mock.id,
@@ -99,6 +102,7 @@ const created = await api("POST", "/api/game/create", {
     gmMode: "standalone",
     partyCharacterIds: [],
     personaId: persona.id,
+    ...(rulesetId ? { ruleset: { id: rulesetId, version: Number(rulesetVersion ?? 1) } } : {}),
   },
 });
 const chatId = created.sessionChat.id;
@@ -132,6 +136,18 @@ record("other cards untouched", !npc?.rulesetSheet?.build?.fields?.xp);
 const first = await generate(chatId, { userMessage: "I report to the training yard." });
 const turn1 = lastFacts();
 record("turn facts reach the game master", Boolean(turn1.facts), turn1.facts?.split("\n")[4]);
+if (rulesetId) {
+  const lines = readFileSync(mockLog, "utf8").trim().split("\n");
+  const prompt = JSON.parse(lines.at(-1)).messages.map((m) => (typeof m.content === "string" ? m.content : "")).join("\n");
+  const sheets = prompt.match(/<character_sheets>([\s\S]*?)<\/character_sheets>/)?.[1] ?? "";
+  const player = sheets.split("\n\n").find((block) => block.trim().startsWith("Evelyn Trevelyan")) ?? "";
+  const expected = (await ledger("GET", "/v1/summary")).character;
+  record(
+    "the ruleset sheet block shows the ledger's level and resources",
+    player.includes(`Level ${expected.level}`) && player.includes(`Supplies ${expected.resources.supplies}`) && player.includes(`Training ${expected.resources.training}`),
+    player.split("\n")[2]?.slice(0, 120),
+  );
+}
 
 // Real activity arrives between generations of the same turn.
 // A category not yet earned today, so the check also works on a reused scratch ledger.
