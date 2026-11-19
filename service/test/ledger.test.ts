@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import { activeCheckIns, grants, makeLedger, manual, TZ, walk } from "./helpers.ts";
 import { RULES_V1 } from "../src/rules.ts";
@@ -201,7 +203,7 @@ test("records without optional measurements still count; bad records are rejecte
 });
 
 test("a rules change keeps earlier grants at their rule version", () => {
-  const path = `${process.env.TMPDIR ?? "/tmp"}/lfr-rules-${process.pid}-${Date.now()}.sqlite`;
+  const path = join(tmpdir(), `lfr-rules-${process.pid}-${Date.now()}.sqlite`);
   const first = makeLedger({ path });
   first.ledger.ingest([walk()]);
   first.db.close();
