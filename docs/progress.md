@@ -15,7 +15,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
 | [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch, including second chance, lock badge and restore handling; DSH next; crafting, Companions and Campaign views wait for stage 5 |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
-| [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` (2026-11-18) | Ruleset package and content pack format first; bulk entries drafted by cheaper models from worked exemplars |
+| [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
 
 ## Confirmed decisions
@@ -36,6 +36,8 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-16 | Internal tone and voice playtests use Gemma 4 26B A4B on the LAN Lemonade servers (den-nimo, den-m5) that Patch set up; reasoning off; mechanical checks stay on the mock game master | Patch provided the servers; reasoning-off and server split are agent defaults |
 | 2026-11-18 | Stage 2 rules version 1 and service defaults (resources, soft caps, bonus roll, steps and hydration counting, correction behavior, zero-dependency Node 24 runtime) | Agent defaults, recorded in [stage 2](02-durable-mechanics.md#rules-version-1-and-recorded-defaults-2026-11-18) |
 | 2026-11-18 | Stage 3 fitness module defaults: per-game switch, sheet field ids `level`/`xp`/`supplies`/`training`/`rerolls`, turn facts locked to the player's message, sighted dice pool on for fitness games, ledger's roll result as the only receipt | Agent defaults, recorded in [stage 3](03-marinara-integration.md#recorded-defaults-2026-11-18) |
+| 2026-11-18 | Campaign content is compact structured entries the Game Master expands, not long prose; this session designs and reviews, cheaper models draft bulk entries from exemplars | Patch's token-budget suggestion; format is an agent default ([stage 5](05-campaign-season.md)) |
+| 2026-11-18 | Ruleset v1: d20 + DA:I attributes; level, unspent training and unspent supplies give concrete fight bonuses, making war-table spends a readiness trade-off | Agent default ([stage 5](05-campaign-season.md#ruleset-version-1-2026-11-18)) |
 | 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
@@ -229,3 +231,23 @@ Validation: `pnpm check` passed; fitness-turn 23/23 and fitness-recovery 12/12 o
 Gemma 4 turns on den-nimo narrated the locked facts lightly and in character.
 Not tested: mobile layout, these new flows through the browser, den-lore.
 Next action: DSH as an optional per-game toggle.
+
+### 2026-11-18 — Stage 5 ruleset and season-one pack
+
+Claude Code session `s/a60d803335a9aa0a`, at Patch's go-ahead. Claimed in
+`6846b54`.
+
+- Ruleset `content/ruleset/inquisition.json` (v1), validated by Marinara's
+  parser and imported as `local/inquisition`; `fitness-turn.mjs --ruleset`
+  24/24 with the Game Master's sheet block showing the ledger's values.
+- Content format, linter/builder and installer under `content/`; season spine
+  and one exemplar per type by this session; 85 further entries drafted by five
+  subagents (four Sonnet, one Haiku) from the inventory, then reviewed and
+  corrected here.
+- First real-model play test of the installed campaign (see stage 5).
+
+Validation: `content/build.mjs --check` 93 entries, 0 errors; ruleset
+validator OK; installer run twice (idempotent); four played turns read as
+intended. Not done: internal full playthrough, the content matrix, an
+importable character card, crafting recipes, tuning. Next action: stage 6
+scripted persona playthroughs using this pack.

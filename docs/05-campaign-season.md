@@ -3,12 +3,17 @@
 Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started
 2026-11-18). Updated: 2026-11-18.
 
-Current work (2026-11-18): the Inquisition ruleset package and the content
-pack format, season spine and worked exemplars, written by this session. Bulk
-entries (remaining companions, locations, missions, encounters) are drafted by
-cheaper-model subagents from those templates and reviewed here for canon,
-voice and mechanics. Content is compact structured material that the game
-master expands at play time, not pre-written story prose.
+Current state (2026-11-18): the Inquisition ruleset
+([`content/ruleset/inquisition.json`](../content/ruleset/inquisition.json)) and
+a complete first-draft season pack of 93 entries
+([`content/`](../content/README.md)) are written, linted, built and installed
+into scratch Marinara. Content is compact structured material the Game Master
+expands at play time, not pre-written story prose. This session wrote the
+ruleset, format, build/install tooling, season spine and one exemplar per entry
+type; five subagents (four Sonnet, one Haiku) drafted the bulk entries from those
+templates and the id inventory in [`content/pack-plan.md`](../content/pack-plan.md),
+and this session reviewed them. Next: internal playthroughs (stage 6 harness)
+to tune numbers and tone, and the content matrix.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: phone and watch](04-phone-and-watch.md) ·
@@ -33,23 +38,91 @@ Write a Game Mode ruleset package against Marinara's ruleset schema
 in the Marinara checkout). It is the supported home for campaign mechanics and
 needs no fork changes.
 
-- [ ] Classes (Warrior, Rogue, Mage) and specializations, with a sheet layout,
+- [x] Classes (Warrior, Rogue, Mage) and specializations, with a sheet layout,
   attributes, skills, resources (including a focus-style resource) and level table.
-- [ ] Declare the number fields the stage 3 fitness module writes on the
+- [x] Declare the number fields the stage 3 fitness module writes on the
   player's card (`build.fields`): `level`, `xp`, `supplies`, `training` and
   `rerolls`. The module writes these ids from the ledger on every sync; the
   ruleset decides how they display and what they unlock. Contract recorded
   2026-11-18 in [stage 3](03-marinara-integration.md#recorded-defaults-2026-11-18).
-- [ ] Abilities and talents that training progression unlocks.
-- [ ] Items, equipment slots, crafting materials and war-table resources.
-- [ ] Enemies and encounter stat blocks: Venatori, Red Templars, demons and
+- [x] Abilities and talents that training progression unlocks.
+- [x] Items, equipment slots, crafting materials and war-table resources.
+- [x] Enemies and encounter stat blocks: Venatori, Red Templars, demons and
   Corypheus's forces.
-- [ ] Ruleset-resolved combat, with preparation resources mapped to concrete
+- [x] Ruleset-resolved combat, with preparation resources mapped to concrete
   combat benefits.
-- [ ] A difficulty ladder and dice notation used by checks and reward rolls.
+- [x] A difficulty ladder and dice notation used by checks and reward rolls.
 
 Describe the mechanics actually supplied; this is a Dragon Age-themed ruleset,
 not an implementation of an official tabletop system.
+
+## Ruleset version 1 (2026-11-18)
+
+| Item | Default |
+| --- | --- |
+| Checks | d20 + attribute (+2 trained, +4 expert) against Routine 8, Hard 12, Daunting 16, Legendary 20; natural 1 and 20 count; advantage allowed |
+| Attributes | DA:I's six: Strength, Dexterity, Magic, Cunning, Willpower, Constitution (−1 to 6) |
+| Skills and saves | Ten skills (Arcana is −2 untrained) and three saves: Fortitude, Reflex, Resolve |
+| Identity fields | Class (warrior, rogue, mage), specialization (nine canon specializations, chosen later), race, pronouns, background |
+| Fitness fields | `level`, `xp`, `supplies`, `training`, `rerolls`, written by the stage 3 module |
+| What fitness buys in play | Level: Seasoned (+1 at 4, +2 at 8, +3 at 12, +4 at 16) on every ability check and attacks, +5 health per level, focus 1/2/3 at levels 1/6/12. Unspent training: Drilled +1 at 4, +2 at 8 on attacks. Unspent supplies: +4/+8/+12 health at 5/10/15. Spending at the war table therefore trades a little fight readiness for progress elsewhere |
+| Talents | 12 talents, four per class across canon trees, unlocking at levels 1, 3 and 6; descriptions are original |
+| Opponents | Shade, wraith, despair demon, rage demon, Venatori gladiator, spellbinder and magister, Red Templar, horror and behemoth, in skirmish/dangerous/boss tiers |
+| Items | A Skyhold quartermaster list of weapons, armor, potions and crafting materials; crafting recipes are not yet defined |
+| Rests | Rest at an Inquisition camp (full restore, clears conditions) and Catch your breath (stamina) |
+| Known rough edge | NPC cards get the same sheet (Level 1, Race Human by default); harmless, tidy later |
+
+## Content pack (2026-11-18)
+
+Format, rules and tooling: [`content/README.md`](../content/README.md);
+inventory: [`content/pack-plan.md`](../content/pack-plan.md).
+
+| Type | Count | Notes |
+| --- | --- | --- |
+| Season spine | 1 | Three acts, Before Adamant; original antagonists Aurelian Tharsis and Ilse Varn, quartermaster Hadley Brisk |
+| Companions | 8 | Summary, personality, voice, original dialogue examples, training role, reactions to effort (never guilt), hooks, knowledge limits, gated revelations |
+| World | 20 | 6 NPCs, 10 locations (two original), 4 factions |
+| Missions | 25 | 7 act one, 8 act two, 6 act three, 2 repeatable operations, 2 recovery; each with real choices and a low-energy version |
+| Encounters | 13 | Opponents from the ruleset; each names how preparation pays off |
+| War-table projects | 14 | Costs in supplies or training, spent through the Training panel |
+| Race variants | 4 | Human, elf, dwarf, Qunari (Vashoth); one constant lorebook each |
+| Watch text | 8 | Raven notes, drill cues and dice flavor per companion |
+
+`content/build.mjs` lints every entry (sections, word counts, ids, opponent
+ids, cross-references, XP/level promises) and builds a SillyTavern-format season
+lorebook (81 entries), four race lorebooks and the Game Mode setup JSON.
+`content/install.mjs` imports the ruleset and lorebooks, creates the persona and
+game with the ruleset pinned, sets class and race, and turns on the fitness
+module; `--set-race` swaps the race lorebook and the card's race field only.
+
+Review of the drafted entries: secrets checked (Solas's identity absent;
+Blackwall's only in his gated Revelation; Iron Bull's reporting open as in
+canon), two mechanical promises removed ("supply gain" outcomes), Sera's lines
+given her contractions, and the magister opponent renamed `venatori-magister` so
+the finale fights Tharsis himself.
+
+## First play test (2026-11-18)
+
+`content/install.mjs` installed the pack into scratch Marinara (elf mage
+"Evelyn Trevelyan", fitness module on, ledger seeded from the `steady` persona)
+and [`harness/checks/campaign-play.mjs`](../harness/checks/campaign-play.mjs)
+played the opening and three turns with Gemma 4 26B on den-nimo:
+
+- Opening: a Skyhold courtyard scene with Cassandra and Cullen in voice,
+  setting up the tampered ledger and scout reports, ending in four choices.
+- The ledger: Hadley Brisk walked through the mission's beats (neat, plausible,
+  wrong entries; grain, iron and herbs vanishing).
+- Sera on the tavern roof: her "little people" network, lights on old mule
+  trails and a "tingly" smell (red lyrium, unnamed) — lorebook-driven and
+  spoiler-safe.
+- A logged rest day: a quiet garden afternoon; Solas arrived and called rest
+  "a necessary discipline". No guilt, no nagging.
+- Slips: one "weirwood" (another franchise) in narration; Brisk was gendered
+  "he", which is fine but unplanned.
+- Speed: 130–175 s per turn with a 10.6k-token prompt; generation ran at
+  5.7 tokens/s against ~70 two days earlier, because den-nimo was busy with
+  Patch's background work. Lemonade reused no prompt cache between turns
+  (`cache_tokens` 0); worth investigating in stage 6 for latency.
 
 ## Canon defaults
 
@@ -71,7 +144,7 @@ Use these unless Patch says otherwise; record any change here.
 - [ ] Fitness-to-progression rules that match the implemented mechanics.
 - [ ] Supported dice notation, thresholds and reward behavior.
 - [ ] Combat configuration using the ruleset and actual Marinara functionality.
-- [ ] Detailed lorebook entries for Sera, Cullen Rutherford, Dorian Pavus,
+- [x] Detailed lorebook entries for Sera, Cullen Rutherford, Dorian Pavus,
   the Iron Bull and Blackwall.
 - [ ] An immersive opening at Skyhold that establishes Lore's character and
   the approaching conflict with Corypheus.
@@ -79,23 +152,23 @@ Use these unless Patch says otherwise; record any change here.
 ## Full-season work
 
 - [ ] Separate authored canon, campaign choices, played-event memory and mechanics.
-- [ ] Make Inquisitor race a single campaign variable. Key race-specific
+- [x] Make Inquisitor race a single campaign variable. Key race-specific
   content to it: companion reactions (for example Sera and Solas with an elven
   Inquisitor, Iron Bull with a Vashoth one, Cassandra and Leliana on a human
   noble), NPC address and prejudice, backstory hooks, and any ruleset traits.
   Changing the race swaps those entries and the character build's race line;
   it never alters activity, grants or past session summaries.
-- [ ] Author all eight requested companions: Solas, Cassandra, Leliana, Cullen,
+- [x] Author all eight requested companions: Solas, Cassandra, Leliana, Cullen,
   Dorian, Sera, Iron Bull and Blackwall.
 - [ ] Build Skyhold as a returning hub with training, companion scenes,
   preparation/crafting and war-table decisions.
 - [ ] Author three complete acts with meaningful choices and a first-season
   conclusion; account for branches without requiring an endless generated plot.
-- [ ] Provide approximately 20–30 authored mission/scene templates and 10–15
+- [x] Provide approximately 20–30 authored mission/scene templates and 10–15
   encounter templates, with deliberate variation and repeatable operations.
-- [ ] Provide recovery-day, low-activity, missed-day and returning-after-a-break
+- [x] Provide recovery-day, low-activity, missed-day and returning-after-a-break
   content that remains enjoyable and useful.
-- [ ] Write in-character text for watch features: raven notifications, drill
+- [x] Write in-character text for watch features: raven notifications, drill
   cues and dice-roll flavor per companion.
 - [ ] Build the content manifest/import/export path and preserve an independently
   importable character card alongside the complete campaign pack.

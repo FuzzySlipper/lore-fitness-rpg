@@ -59,8 +59,7 @@ swapped in for the three listed.
 
 Opponent ids come from the ruleset catalog: shade, wraith, despair-demon,
 rage-demon, venatori-gladiator, venatori-spellbinder, red-templar,
-red-templar-horror, red-templar-behemoth, envy-shade (the Venatori magister
-lieutenant, used for Tharsis).
+red-templar-horror, red-templar-behemoth, venatori-magister (used for Tharsis).
 
 | id | tier | opponents |
 | --- | --- | --- |
@@ -75,7 +74,7 @@ lieutenant, used for Tharsis).
 | a2-quarry-heart | boss | red-templar-behemoth x1 |
 | a3-camp-raid | dangerous | rage-demon x1, shade x3 |
 | a3-watchtower-gate | dangerous | venatori-gladiator x2, red-templar-horror x1 |
-| a3-tharsis | boss | envy-shade x1, wraith x2 |
+| a3-tharsis | boss | venatori-magister x1, wraith x2 |
 | op-rift | skirmish | shade x2, wraith x1 |
 
 ## War-table projects (`pack/war-table/`)

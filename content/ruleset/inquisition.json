@@ -1509,8 +1509,8 @@
           }
         },
         {
-          "id": "envy-shade",
-          "label": "Corypheus's Lieutenant (Venatori Magister)",
+          "id": "venatori-magister",
+          "label": "Venatori Magister",
           "summary": "A magister who leads Corypheus's forces in the field and expects to be obeyed.",
           "filters": {
             "faction": "Venatori",
