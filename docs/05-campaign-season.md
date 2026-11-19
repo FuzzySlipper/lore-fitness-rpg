@@ -27,6 +27,11 @@ needs no fork changes.
 
 - [ ] Classes (Warrior, Rogue, Mage) and specializations, with a sheet layout,
   attributes, skills, resources (including a focus-style resource) and level table.
+- [ ] Declare the number fields the stage 3 fitness module writes on the
+  player's card (`build.fields`): `level`, `xp`, `supplies`, `training` and
+  `rerolls`. The module writes these ids from the ledger on every sync; the
+  ruleset decides how they display and what they unlock. Contract recorded
+  2026-11-18 in [stage 3](03-marinara-integration.md#recorded-defaults-2026-11-18).
 - [ ] Abilities and talents that training progression unlocks.
 - [ ] Items, equipment slots, crafting materials and war-table resources.
 - [ ] Enemies and encounter stat blocks: Venatori, Red Templars, demons and

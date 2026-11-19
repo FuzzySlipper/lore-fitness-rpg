@@ -14,6 +14,7 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
 | [`den-serve.json`](den-serve.json) | den-serve manifest so the crew playtest service can host one private scratch Marinara per session, with the mock GM |
 | [`den-serve-live.json`](den-serve-live.json) | The same with the real model on den-nimo as the default connection |
 | [`checks/swipe-persistence.mjs`](checks/swipe-persistence.mjs) | Stage 1 runtime check: projected build, projection marker and a granted item survive regenerate, swipe switch and continue |
+| [`checks/fitness-turn.mjs`](checks/fitness-turn.mjs) | Stage 3 check: projection onto the player's card, locked turn facts across regenerate/continue, one check-in and one roll per real activity. Needs `--persona` and the Marinara `fitness/module` build |
 | [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text |
 | [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning), expanded by the stage 2 history generator in [`service/src/synthetic.ts`](../service/src/synthetic.ts) |
 

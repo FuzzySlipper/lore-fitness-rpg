@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` (2026-11-18) | Building the fitness module on Marinara branch `fitness/module` against the stage 2 API |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Fitness module works on scratch (Marinara `fitness/module` `2ee03fc13`); next, the second-chance reroll action, lock marker, restore reconciliation, then DSH |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -35,6 +35,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-16 | Lore plays the Inquisitor directly; the Inquisitor's race (human, elf, dwarf, Qunari) must be easy to change | Lore, relayed by Patch |
 | 2026-11-16 | Internal tone and voice playtests use Gemma 4 26B A4B on the LAN Lemonade servers (den-nimo, den-m5) that Patch set up; reasoning off; mechanical checks stay on the mock game master | Patch provided the servers; reasoning-off and server split are agent defaults |
 | 2026-11-18 | Stage 2 rules version 1 and service defaults (resources, soft caps, bonus roll, steps and hydration counting, correction behavior, zero-dependency Node 24 runtime) | Agent defaults, recorded in [stage 2](02-durable-mechanics.md#rules-version-1-and-recorded-defaults-2026-11-18) |
+| 2026-11-18 | Stage 3 fitness module defaults: per-game switch, sheet field ids `level`/`xp`/`supplies`/`training`/`rerolls`, turn facts locked to the player's message, sighted dice pool on for fitness games, ledger's roll result as the only receipt | Agent defaults, recorded in [stage 3](03-marinara-integration.md#recorded-defaults-2026-11-18) |
 | 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
@@ -187,3 +188,24 @@ exact schedules; HTTP read-back observed. Not done: den-lore install, Health
 Connect payload mapping (stage 4), the Marinara module (stage 3), so no
 end-to-end swipe check against the ledger yet. Next action: stage 3's fitness
 module against this API.
+
+### 2026-11-18 — Stage 3 Game Mode fitness module
+
+Claude Code session `s/a60d803335a9aa0a`; Patch said to start stage 3. Claimed
+in `390d12b`.
+
+- Marinara branch `fitness/module` at `2ee03fc13` (on den-agents, and fetched
+  as a branch into `C:\Dev\Marinara-Custom` without touching its working tree):
+  ledger client, projection onto the persona's card, bonus rolls with
+  Marinara's dice, turn facts locked to the player's message, `/api/fitness`
+  routes and a Training panel in Game Mode.
+- Harness: scratch Marinara gets `FITNESS_LEDGER_URL` for its seeded ledger;
+  new check [`harness/checks/fitness-turn.mjs`](../harness/checks/fitness-turn.mjs).
+- Stage 5: the ruleset must declare the five sheet field ids.
+
+Validation: fitness-turn 16/16 on scratch and 15/15 in a hosted playtest
+session; swipe check still 15/15; `pnpm check` passed before the last small
+change (then server typecheck, Prettier and build passed); the panel was used
+in a real browser, including a war-table spend. Not tested: a real model,
+ledger down, mobile layout, den-lore. Next action: the second-chance reroll,
+lock marker and restore reconciliation, then DSH.

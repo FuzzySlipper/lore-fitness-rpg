@@ -71,6 +71,7 @@ fi
 
 cd "$marinara_dir"
 HOST="$host" PORT="$port" DATA_DIR="$data/marinara" AUTO_UPDATE_ENABLED=false PROVIDER_LOCAL_URLS_ENABLED=true \
+  FITNESS_LEDGER_URL="http://127.0.0.1:$ledger_port" \
   node scripts/run-server.mjs packages/server/dist/index.js > "$data/marinara.log" 2>&1 &
 marinara_pid=$!
 
