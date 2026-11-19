@@ -15,7 +15,8 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
 | [`den-serve-live.json`](den-serve-live.json) | The same with the real model on den-nimo as the default connection |
 | [`checks/swipe-persistence.mjs`](checks/swipe-persistence.mjs) | Stage 1 runtime check: projected build, projection marker and a granted item survive regenerate, swipe switch and continue |
 | [`checks/fitness-turn.mjs`](checks/fitness-turn.mjs) | Stage 3 check: projection onto the player's card, locked turn facts across regenerate/continue, one check-in and one roll per real activity. Needs `--persona` and the Marinara `fitness/module` build |
-| [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text |
+| [`checks/fitness-recovery.mjs`](checks/fitness-recovery.mjs) | Stage 3 check: stops the scratch ledger (turns go on without facts, nothing locked), then restores it from an older backup (flagged, card kept, explicit accept) |
+| [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text; `--fitness` turns the module on and logs a check-in between turns |
 | [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning), expanded by the stage 2 history generator in [`service/src/synthetic.ts`](../service/src/synthetic.ts) |
 
 ## One-time setup on den-agents

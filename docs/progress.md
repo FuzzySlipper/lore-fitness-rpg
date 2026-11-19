@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Fitness module works on scratch (Marinara `fitness/module` `2ee03fc13`); next, the second-chance reroll action, lock marker, restore reconciliation, then DSH |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch, including second chance, lock badge and restore handling; DSH next; crafting, Companions and Campaign views wait for stage 5 |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -209,3 +209,23 @@ change (then server typecheck, Prettier and build passed); the panel was used
 in a real browser, including a war-table spend. Not tested: a real model,
 ledger down, mobile layout, den-lore. Next action: the second-chance reroll,
 lock marker and restore reconciliation, then DSH.
+
+### 2026-11-18 — Stage 3: second chance, lock badge, restore handling, real model
+
+Claude Code session `s/a60d803335a9aa0a`, continuing stage 3 at Patch's go-ahead.
+
+- Marinara `fitness/module`: the Fade-touched second chance (spend one reroll,
+  rethrow the latest turn's sighted dice pool, regenerate), a lock badge on
+  locked replies, detection of a ledger restored from an older backup with an
+  explicit "continue from the journal as it is now", and the Marinara update
+  procedure in the stage 3 doc.
+- Harness: `fitness-turn.mjs` now 23 checks including dice locking and the
+  second chance; new `fitness-recovery.mjs` (ledger down, ledger restored);
+  `real-turn.mjs --fitness`.
+
+Marinara commit `3d4a4bdf5` (also fetched as a branch into den-lore's `Marinara-Custom`).
+
+Validation: `pnpm check` passed; fitness-turn 23/23 and fitness-recovery 12/12 on scratch; real
+Gemma 4 turns on den-nimo narrated the locked facts lightly and in character.
+Not tested: mobile layout, these new flows through the browser, den-lore.
+Next action: DSH as an optional per-game toggle.

@@ -4,13 +4,13 @@ Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
 Updated: 2026-11-18.
 
-Code: Marinara branch `fitness/module` at `2ee03fc13`, based on
+Code: Marinara branch `fitness/module` at `3d4a4bdf5` (first pass `2ee03fc13`), based on
 `custom/agent-turn` `3050e9a40`. It exists in the den-agents copy
 (`~/dev/lore-fitness-rpg-work/marinara-custom`) and was fetched into
 `C:\Dev\Marinara-Custom` on den-lore as a branch only; that checkout's working
 tree was not changed, and nothing is deployed to Lore's `Marinara-Engine`.
-Next useful actions: the reroll ("second chance") action, a lock marker on
-locked turns, backup-restore reconciliation, then DSH.
+Next useful actions: DSH as a per-game toggle; crafting, Companions and
+Campaign views once stage 5 content exists; deployment in stage 6.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: durable mechanics](02-durable-mechanics.md) ·
@@ -53,9 +53,9 @@ server extensions are not the backend integration path.
   mechanical turn; swipe, regenerate and continue rewrite only the prose. Extend
   the existing pre-thrown dice queue guarantee and show a lock marker on locked
   turns. Done for fitness results (locked turn facts) and dice (the module turns
-  on Marinara's sighted dice pool); war-table outcomes beyond the spend itself
-  and the lock marker remain.
-- [ ] Reroll resource: a visible action that spends one recovery-earned reroll
+  on Marinara's sighted dice pool), with a lock badge on locked replies;
+  war-table outcomes beyond the spend itself wait for stage 5 content.
+- [x] Reroll resource: a visible action that spends one recovery-earned reroll
   to re-resolve a locked result, recorded in the ledger.
 - [ ] Committed UI actions for spending preparation resources, war-table
   operations and crafting, recorded in the ledger rather than narrated turns.
@@ -69,12 +69,14 @@ server extensions are not the backend integration path.
   Companions and Campaign wait for stage 5 content.
 - [ ] Connect preparation resources and training progression to actual ruleset
   combat benefits, choices and equipment rather than only narrative claims.
-- [ ] Handle regeneration, swipes, restart, continuation and backup restore
+- [x] Handle regeneration, swipes, restart, continuation and backup restore
   explicitly; retain the existing behavior for unaffected chats.
 - [ ] Expose useful status when the fitness service, DSH or optional narration is
-  unavailable while preserving completed journal/mechanical work.
-- [ ] Record a Marinara update procedure: how to merge an upstream release into
-  the custom branch with the fitness module and other local patches.
+  unavailable while preserving completed journal/mechanical work. Done for the
+  fitness service (verified); DSH remains.
+- [x] Record a Marinara update procedure: how to merge an upstream release into
+  the custom branch with the fitness module and other local patches (see
+  [Marinara update procedure](#marinara-update-procedure)).
 - [ ] DSH (after the Game Mode path works): a per-game toggle that sends DSH the
   committed facts for a turn and keeps Game Mode's structured output. The
   reviewer checks prose against committed results and companion knowledge limits.
@@ -92,6 +94,10 @@ server extensions are not the backend integration path.
 | First turn after enabling | Facts and the panel's "new" list start from the moment the module is turned on; earlier rewards are acknowledged as seen |
 | Dice | Enabling the module turns on Marinara's one-request dice with the sighted pool, so retellings face the same dice. Bonus rolls are thrown with `rollDieSecurely` and recorded by the ledger; only the ledger's stored result is ever shown, so no separate Marinara receipt is kept |
 | Ledger down | The turn goes ahead without fitness facts and nothing is locked for it; the panel says the journal is unreachable |
+| Second chance | Panel button, enabled with at least one reroll. Only for the latest reply, once per reply, and only when that turn was dealt a dice pool (refusals name why). Spends one reroll in the ledger (idempotent by key), rethrows that reply's sighted pool in place, then runs the game's own retry-turn regenerate. Fitness facts stay as committed; the new dice lock again |
+| Lock badge | A lock icon with an explanation in the reply's action row when the player message it answers has locked fitness facts |
+| Ledger restored from an older backup | Detected when the ledger's newest journal entry is older than one this game already saw. The module stops writing the card and adding facts and shows a warning; "Continue from the journal as it is now" resumes from the restored ledger. Restoring the newer ledger backup instead clears the condition by itself |
+| Marinara restored from an older backup | Nothing special: the next sync rewrites the card from the ledger and the next turn's facts cover everything since the restored game last saw |
 | War table | Three placeholder projects (send scouts: 2 supplies; drill the recruits: 2 training; provision the next expedition: 4 supplies) until stage 5 supplies real ones |
 
 ## Validation (2026-11-18)
@@ -113,8 +119,60 @@ server extensions are not the backend integration path.
   resources, new rewards, today's six categories (Strength ticked from a logged
   check-in) and the journal; "Send scouts ahead" recorded a 2-supply spend for
   that chat in the ledger and showed the confirmation.
-- Not tested: a real model with fitness facts, the ledger-down path, mobile
-  layout, Lore's Windows install.
+- Second pass (2026-11-18): `fitness-turn.mjs` grew to 23 checks (a plain
+  regenerate faces the same `<dice_pool>`; a second chance spends exactly one
+  reroll, is idempotent, is refused a second time and on an earlier turn; the
+  retelling faces new dice with unchanged fitness facts; the new dice lock
+  again) and passed 23/23. New
+  [`fitness-recovery.mjs`](../harness/checks/fitness-recovery.mjs) passed 12/12:
+  with the scratch ledger stopped, a turn generated without facts and locked
+  nothing, and the panel reported it unreachable; after restoring the ledger
+  from an older backup, the game flagged it, kept the card, and on acceptance
+  followed the restored journal, with facts resuming next turn.
+- Real model: `real-turn.mjs --fitness` with Gemma 4 26B A4B on den-nimo's
+  Lemonade (loaded for this run) and the module on. The opener mentioned "a
+  pleasant, dull ache from your own morning routine"; after a mobility
+  check-in, the next turn opened with "the lingering warmth of your recent
+  training session". No numbers, no guilt, Game Mode tags and choices intact.
+  10–14 s per turn after a 40 s first turn.
+- Not tested: mobile layout, the second-chance and restore flows through the
+  browser (exercised through the same routes the panel calls), Lore's Windows
+  install.
+- `pnpm check` passed on the final `3d4a4bdf5` (localization, formatting, type
+  checks, production build).
+
+## Marinara update procedure
+
+The fitness module is ordinary commits on a local branch; it is merged, not
+patched in. Lore's running copy is `C:\Dev\Marinara-Engine` on
+`local/cartesia-2.4.6`; development happens in `C:\Dev\Marinara-Custom` (and
+its den-agents copy) on `fitness/module`, which is `custom/agent-turn` plus the
+fitness commits.
+
+1. Back up `C:\dev\Marinara-Data`, Marinara-Engine's `.env`, and the ledger
+   (`node src/cli.ts backup`).
+2. In the development checkout, merge the intended upstream stable release into
+   `custom/agent-turn` first, following that fork's `LOCAL-PATCHES.md` (Cartesia,
+   OpenCode sessions, custom-provider settings, Add spice, Conversation
+   playback, the DSH agent turn). Then merge `custom/agent-turn` into
+   `fitness/module`.
+3. Expected conflict points for the fitness module, all small:
+   `packages/server/src/routes/generate.routes.ts` (the 16-line hook before
+   `injectCharacterAdvancedPrompts()` and one import), `routes/index.ts` (one
+   import and one `register`), `config/runtime-config.ts` (one getter),
+   `GameSurface.tsx` and `GameNarration.tsx` (props, the Training button, the
+   lock badge, one `useMemo`), the English locale catalog (sorted keys) and
+   `CHANGELOG.md`. Everything else is in new files. If upstream renames the Game
+   Mode prompt assembly, re-place the hook so it still runs after the player
+   message is saved and before the final format reminder.
+4. Validate: `pnpm check`; then on a scratch instance
+   (`harness/scripts/serve-scratch-marinara.sh --persona steady`) run
+   `harness/checks/swipe-persistence.mjs`, `fitness-turn.mjs` and
+   `fitness-recovery.mjs`, and `real-turn.mjs --fitness` against a LAN model.
+5. Deploy by merging `fitness/module` into Marinara-Engine's
+   `local/cartesia-2.4.6` (or fast-forwarding that checkout to it), `pnpm install`,
+   `pnpm build`, set `FITNESS_LEDGER_URL` in its `.env` if the ledger is not on
+   `127.0.0.1:7900`, and restart Marinara. Stage 6 owns the first deployment.
 
 ## Dice, combat and narrative
 

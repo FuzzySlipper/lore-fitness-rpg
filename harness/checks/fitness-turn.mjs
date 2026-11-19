@@ -54,6 +54,15 @@ const lastMessage = async (chatId) => {
   return (Array.isArray(list) ? list : (list.messages ?? [])).at(-1);
 };
 
+/** The sighted dice pool the newest request showed the game master. */
+function lastPool() {
+  const lines = readFileSync(mockLog, "utf8").trim().split("\n");
+  return JSON.parse(lines.at(-1)).messages
+    .map((m) => (typeof m.content === "string" ? m.content : ""))
+    .join("\n")
+    .match(/<dice_pool>[\s\S]*?<\/dice_pool>/)?.[0] ?? null;
+}
+
 /** The fitness block in the newest request the mock game master received. */
 function lastFacts() {
   const lines = readFileSync(mockLog, "utf8").trim().split("\n");
@@ -125,7 +134,13 @@ const turn1 = lastFacts();
 record("turn facts reach the game master", Boolean(turn1.facts), turn1.facts?.split("\n")[4]);
 
 // Real activity arrives between generations of the same turn.
-const logged = await api("POST", "/api/fitness/log", { entryId: randomUUID(), category: "strength", note: "fixture drill" });
+// A category not yet earned today, so the check also works on a reused scratch ledger.
+const LABELS = { strength: "Strength", mobility: "Mobility", meal: "Meal habit", rest: "Rest and recovery", moved: "Moved", hydration: "Hydration goal" };
+const todayView = await ledger("GET", `/v1/days/${(await ledger("GET", "/v1/summary")).today}`);
+const category = todayView.categories.find((c) => !c.earned)?.category;
+assert.ok(category, "every category is already earned today; use a fresh scratch ledger");
+const label = LABELS[category];
+const logged = await api("POST", "/api/fitness/log", { entryId: randomUUID(), category, note: "fixture check-in" });
 record("manual check-in logged through Marinara", logged.status === "created", logged.effects?.at(-1));
 
 await generate(chatId, { regenerateMessageId: first.id });
@@ -135,16 +150,36 @@ record("continue reuses the locked facts", lastFacts().facts === turn1.facts);
 
 const second = await generate(chatId, { userMessage: "I ask Cullen how the recruits are doing." });
 const turn2 = lastFacts();
-record("next turn reports the new check-in", /Strength check-in/.test(turn2.facts ?? ""), turn2.facts?.match(/- Strength[^\n]*/)?.[0]);
-record("its bonus roll was thrown once by Marinara", /Bonus roll \d+ on 1d20 for Strength/.test(turn2.facts ?? ""));
+record("next turn reports the new check-in", (turn2.facts ?? "").includes(`- ${label} check-in`), turn2.facts?.split("\n").find((l) => l.startsWith(`- ${label}`)));
+record("its bonus roll was thrown once by Marinara", (turn2.facts ?? "").includes(`on 1d20 for ${label}`));
 await generate(chatId, { regenerateMessageId: second.id });
 record("regenerate of the next turn reuses its facts", lastFacts().facts === turn2.facts);
 
 const third = await generate(chatId, { userMessage: "I head to the war table." });
 const turn3 = lastFacts();
-record("a later turn does not repeat the check-in", !/Strength check-in/.test(turn3.facts ?? ""));
+record("a later turn does not repeat the check-in", !(turn3.facts ?? "").includes(`- ${label} check-in`));
 
-const strengthCheckIns = (await ledger("GET", `/v1/days/${logged.localDate}`)).categories.find((c) => c.category === "strength");
+// Locked dice and the Fade-touched second chance.
+const pool3 = lastPool();
+await generate(chatId, { regenerateMessageId: third.id });
+record("regenerate faces the same dice pool", Boolean(pool3) && lastPool() === pool3, pool3?.split("\n")[1]?.slice(0, 60));
+const rerollsBefore = (await ledger("GET", "/v1/summary")).character.rerolls;
+const key = randomUUID();
+const chance = await api("POST", `/api/fitness/chats/${chatId}/second-chance`, { messageId: third.id, idempotencyKey: key });
+const replay = await api("POST", `/api/fitness/chats/${chatId}/second-chance`, { messageId: third.id, idempotencyKey: key });
+const rerollsAfter = (await ledger("GET", "/v1/summary")).character.rerolls;
+record("a second chance spends exactly one reroll", chance.replayed === false && replay.replayed === true && rerollsAfter === rerollsBefore - 1, `${rerollsBefore} -> ${rerollsAfter}`);
+const refused = async (body) => api("POST", `/api/fitness/chats/${chatId}/second-chance`, body).then(() => false, (e) => /409/.test(e.message));
+record("a second second chance on the same turn is refused", await refused({ messageId: third.id, idempotencyKey: randomUUID() }));
+record("an earlier turn cannot take a second chance", await refused({ messageId: first.id, idempotencyKey: randomUUID() }));
+await generate(chatId, { regenerateMessageId: third.id });
+const rethrown = lastPool();
+record("the retelling after a second chance faces new dice", Boolean(rethrown) && rethrown !== pool3);
+record("its fitness facts are unchanged", lastFacts().facts === turn3.facts);
+await generate(chatId, { regenerateMessageId: third.id });
+record("the new dice are locked again", lastPool() === rethrown);
+
+const strengthCheckIns = (await ledger("GET", `/v1/days/${logged.localDate}`)).categories.find((c) => c.category === category);
 const rolls = (await ledger("GET", "/v1/bonus-rolls")).bonusRolls.filter((r) => r.checkInId === strengthCheckIns.checkIn?.id);
 record("one check-in and one resolved roll in the ledger", strengthCheckIns.earned && rolls.length === 1 && rolls[0].status === "resolved" && rolls[0].resolvedBy === "marinara-dice");
 
@@ -153,7 +188,6 @@ const after = await ledger("GET", "/v1/summary");
 const fieldsAfter = meta.gameCharacterCards.find((c) => c.name === "Evelyn Trevelyan").rulesetSheet.build.fields;
 record("card follows the ledger after new activity", fieldsAfter.xp === after.character.xp, `xp ${before.character.xp} -> ${fieldsAfter.xp}`);
 record("three locked turns recorded", Object.keys(meta.fitness.turns).length === 3);
-void third;
 
 const failed = results.filter((r) => !r.ok);
 process.stdout.write(`\n${results.length - failed.length}/${results.length} checks passed (chat ${chatId}).\n`);
