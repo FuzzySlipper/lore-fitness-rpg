@@ -162,11 +162,15 @@ is the source of truth.
   delivery noise, generator determinism, backup and reopen, v1 → v2 migration,
   newer-schema refusal, and an HTTP resend across a service restart.
 - `npm run typecheck` clean.
+- On den-lore (Windows 11, Node 25.9.0 from Lore's fnm install, run from
+  `C:\Dev\lore-fitness-rpg\service` with nothing installed): 23/23 pass after
+  `b50d37d` fixed a test's hard-coded `/tmp` path. Nothing was started or
+  installed there.
 - Manual run: `cli.ts seed` for all five personas with noise matched their
   schedules (steady 84/84, busy 21/21, illness 58/58, missed-days 15/15,
   returning 60/60); `main.ts` served the seeded ledger and `/v1/summary` and
   `/v1/journal` read back correctly.
-- Not yet done: den-lore install, real Health Connect payloads, Marinara module.
+- Not yet done: den-lore service install, real Health Connect payloads, Marinara module.
 
 Record actual fixtures, commands, results, commit references and tuned rules
 here and in [progress.md](progress.md). Post completion or material rule/contract

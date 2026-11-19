@@ -182,7 +182,7 @@ next work. Claimed stage 2 in `1dd5bac`.
   persona. A hosted session showed 269 activities and 84 check-ins at the
   ledger and closed all three ports on stop.
 
-Validation: 23 tests and the typecheck pass; all five personas seeded to their
+Validation: 23 tests and the typecheck pass on den-agents, and the 23 tests pass on den-lore with Node 25.9 (Windows); all five personas seeded to their
 exact schedules; HTTP read-back observed. Not done: den-lore install, Health
 Connect payload mapping (stage 4), the Marinara module (stage 3), so no
 end-to-end swipe check against the ledger yet. Next action: stage 3's fitness
