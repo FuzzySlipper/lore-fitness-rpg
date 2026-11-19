@@ -1,6 +1,14 @@
 # Stage 5 — Inquisition ruleset and complete campaign
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started
+2026-11-18). Updated: 2026-11-18.
+
+Current work (2026-11-18): the Inquisition ruleset package and the content
+pack format, season spine and worked exemplars, written by this session. Bulk
+entries (remaining companions, locations, missions, encounters) are drafted by
+cheaper-model subagents from those templates and reviewed here for canon,
+voice and mechanics. Content is compact structured material that the game
+master expands at play time, not pre-written story prose.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: phone and watch](04-phone-and-watch.md) ·
