@@ -1,14 +1,14 @@
 # Stage 2 — Durable activity and progression mechanics
 
-Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started
-2026-11-18). Updated: 2026-11-18.
+Status: Service implemented (2026-11-18); den-lore deployment and the swipe
+acceptance through Marinara remain. Owner: Claude Code session
+`s/a60d803335a9aa0a`. Updated: 2026-11-18.
 
-Current work (2026-11-18): the service under [`service/`](../service/) — SQLite
-ledger, ingestion with duplicate/revision handling, daily check-ins, grants,
-corrections, resources, rerolls, bonus-roll receipts, projection contract,
-backup/migration and the synthetic history generator — so the stage 6 harness
-can feed persona histories to a scratch ledger. Next step after that: wire the
-harness to it.
+The service lives in [`service/`](../service/README.md) with its commands, API
+contract and the steps the stage 3 fitness module follows. Next useful actions:
+the stage 3 module consumes `/v1/projection`, `/v1/bonus-rolls` and `/v1/spends`;
+stage 4 maps Health Connect records onto the activity record; stage 6 installs
+it on den-lore.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: platform contract](01-platform-contract.md) ·
@@ -27,24 +27,24 @@ level and preparation-resource balances; Marinara displays and uses them.
 
 ## Work checklist
 
-- [ ] Create the service, versioned API schema, configuration example and
+- [x] Create the service, versioned API schema, configuration example and
   synthetic fixture runner; document actual install/run/check commands.
-- [ ] Implement activity ingestion, durable acknowledgment and duplicate handling.
-- [ ] Represent manual and imported sources, intervals, units, timezone,
+- [x] Implement activity ingestion, durable acknowledgment and duplicate handling.
+- [x] Represent manual and imported sources, intervals, units, timezone,
   revisions and unavailable optional fields explicitly.
-- [ ] Implement daily category check-ins derived from activity records.
-- [ ] Implement journal reads, corrections, backdating and undo with a visible
+- [x] Implement daily category check-ins derived from activity records.
+- [x] Implement journal reads, corrections, backdating and undo with a visible
   explanation of resulting reward adjustments.
-- [ ] Implement configurable progression rules, XP/level and persisted grant receipts.
-- [ ] Implement preparation-resource balances and spend records for committed
+- [x] Implement configurable progression rules, XP/level and persisted grant receipts.
+- [x] Implement preparation-resource balances and spend records for committed
   UI actions (war table, expedition preparation, crafting).
-- [ ] Implement the reroll resource earned on recovery days and its spend record.
-- [ ] Implement pending bonus-roll requests and replay-safe result receipt.
-- [ ] Implement campaign grant projection and acknowledgment contracts.
-- [ ] Implement a synthetic activity-history generator for internal playtests:
+- [x] Implement the reroll resource earned on recovery days and its spend record.
+- [x] Implement pending bonus-roll requests and replay-safe result receipt.
+- [x] Implement campaign grant projection and acknowledgment contracts.
+- [x] Implement a synthetic activity-history generator for internal playtests:
   ordinary weeks, busy weeks, illness, missed days and returns after a break.
-- [ ] Add backup/migration support appropriate to the ledger's real data shape.
-- [ ] Expose useful sync/processing status for the desktop, phone and watch.
+- [x] Add backup/migration support appropriate to the ledger's real data shape.
+- [x] Expose useful sync/processing status for the desktop, phone and watch.
 
 ## Default reward model
 
@@ -107,21 +107,66 @@ silently discarding one side.
 
 ## Deliverables and acceptance
 
-- [ ] Runnable service with documented commands and synthetic examples.
-- [ ] A journal entry and explainable receipt for every accepted fixture event.
-- [ ] Duplicate/reordered delivery and a restarted client/service produce the
+- [x] Runnable service with documented commands and synthetic examples.
+- [x] A journal entry and explainable receipt for every accepted fixture event.
+- [x] Duplicate/reordered delivery and a restarted client/service produce the
   intended single event, check-in and grant.
-- [ ] Imported copies and overlapping sources collapse into one daily check-in.
-- [ ] Late arrival, timezone/day boundaries, corrections and undo have recorded,
+- [x] Imported copies and overlapping sources collapse into one daily check-in.
+- [x] Late arrival, timezone/day boundaries, corrections and undo have recorded,
   repeatable outcomes.
-- [ ] Replaying the same accepted input and stored rolls yields the same grants.
+- [x] Replaying the same accepted input and stored rolls yields the same grants.
 - [ ] Changing prose or swiping does not delete activity or generate another
-  grant, roll or spend.
-- [ ] Ledger backup/restore and one representative schema migration retain the
+  grant, roll or spend. The ledger side holds by construction (grants come only
+  from activity; rolls resolve once; spends are keyed), but the end-to-end check
+  needs the stage 3 module and stays open until then.
+- [x] Ledger backup/restore and one representative schema migration retain the
   journal and receipts.
-- [ ] Missing optional measurements leave useful manual logging available.
-- [ ] The synthetic history generator produces several weeks of varied activity
+- [x] Missing optional measurements leave useful manual logging available.
+- [x] The synthetic history generator produces several weeks of varied activity
   for the internal playtest.
+
+## Rules version 1 and recorded defaults (2026-11-18)
+
+Placeholders to tune in internal playtests; [`service/src/rules.ts`](../service/src/rules.ts)
+is the source of truth.
+
+| Item | Default |
+| --- | --- |
+| Check-in reward | 20 XP; daily cap 120 (all six categories), which only matters if later rules add XP |
+| Level curve | Level L at 50 × L × (L − 1) XP (2 at 100, 5 at 1,000, 10 at 4,500), maximum 20. Level never goes down after a correction |
+| Resources | `supplies` from Moved, Meal habit and Hydration; `training` from Strength and Mobility; `reroll` (the Fade-touched second chance) from Rest and recovery. One per check-in |
+| Diminishing returns | A check-in grants no resource while that resource's unspent balance is at its soft cap: supplies 15, training 10, rerolls 3. The journal says to spend some at the war table |
+| Bonus roll | 1d20 per check-in, rolled by Marinara's dice. 18–20 is a lucky find: +1 of the check-in's resource, within the soft cap |
+| Steps | Default goal 6,000. The best single source's daily total counts, not the sum across devices, because phone and watch count the same walk |
+| Hydration | Default goal 2,000 ml. Drinks add up across devices; a manual "goal met" entry also counts; extra water earns nothing |
+| Meal habit | A manual check-in against the habit text in settings |
+| Goal changes | Apply to evaluations from then on; an earned check-in is never revoked by a goal change alone |
+| Unknown activity kinds | Kept in the journal without a category; they earn nothing until one is set |
+| Corrections | Manual entries are edited in place with a revision. Imported records are not edited; the player removes them (removal survives re-import) and logs a manual entry. Restore undoes a removal |
+| Withdrawn check-ins | Reversal grants for its XP, resource and bonus find; a pending bonus roll is cancelled; balances may go negative and later check-ins fill them first |
+| Same revision, different content | The stored copy is kept with a warning; sources must raise the revision to change a record |
+| Refusals | A spend larger than the balance (409; prevents a committed war-table action from overdrawing). A ledger with a newer schema than the service (prevents misreading or overwriting it). Bad individual records are rejected one by one with a reason while the rest of the batch is accepted |
+| Day-level entries | A `YYYY-MM-DD` start belongs to that local date and is stored at local noon |
+| Backups | One at every service start, last ten kept, plus `cli.ts backup` on demand |
+| Access | LAN-only, no accounts (household service) |
+| Runtime | Node ≥ 24 type stripping with `node:sqlite`; no runtime dependencies or native build |
+
+## Validation (2026-11-18)
+
+- `npm test`: 23 `node:test` tests pass — duplicates and revisions, overlapping
+  sources, steps across devices, hydration, time-zone day boundaries,
+  backdating, withdrawal with negative balances, level floor, bonus-roll
+  idempotency, spend idempotency and refusal, rerolls and soft caps, projection
+  receipts, manual edits, rejected records and warnings, rule-version retention,
+  replay determinism, every persona history earning exactly its schedule under
+  delivery noise, generator determinism, backup and reopen, v1 → v2 migration,
+  newer-schema refusal, and an HTTP resend across a service restart.
+- `npm run typecheck` clean.
+- Manual run: `cli.ts seed` for all five personas with noise matched their
+  schedules (steady 84/84, busy 21/21, illness 58/58, missed-days 15/15,
+  returning 60/60); `main.ts` served the seeded ledger and `/v1/summary` and
+  `/v1/journal` read back correctly.
+- Not yet done: den-lore install, real Health Connect payloads, Marinara module.
 
 Record actual fixtures, commands, results, commit references and tuned rules
 here and in [progress.md](progress.md). Post completion or material rule/contract

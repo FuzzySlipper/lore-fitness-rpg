@@ -12,11 +12,11 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | Stage | Status | Owner | Next action |
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
-| [2 — Durable mechanics](02-durable-mechanics.md) | In progress | Claude Code `s/a60d803335a9aa0a` (2026-11-18) | Building the service, ledger, rules and synthetic history generator under `service/` |
+| [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
 | [3 — Marinara integration](03-marinara-integration.md) | Planned | Unassigned | Build the fitness module: game-build projection, locked results and committed UI actions; DSH after |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | Planned | Unassigned | Write the Inquisition ruleset package and author the season with the canon defaults |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Harness scaffold and real-model profile work; next, scripted persona sessions and a scratch ledger |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
 
 ## Confirmed decisions
 
@@ -34,6 +34,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-16 | Upstreaming to Marinara is unnecessary; keep changes modular, but a sprawling fork is acceptable when the functionality needs it | Patch, in plan review |
 | 2026-11-16 | Lore plays the Inquisitor directly; the Inquisitor's race (human, elf, dwarf, Qunari) must be easy to change | Lore, relayed by Patch |
 | 2026-11-16 | Internal tone and voice playtests use Gemma 4 26B A4B on the LAN Lemonade servers (den-nimo, den-m5) that Patch set up; reasoning off; mechanical checks stay on the mock game master | Patch provided the servers; reasoning-off and server split are agent defaults |
+| 2026-11-18 | Stage 2 rules version 1 and service defaults (resources, soft caps, bonus roll, steps and hydration counting, correction behavior, zero-dependency Node 24 runtime) | Agent defaults, recorded in [stage 2](02-durable-mechanics.md#rules-version-1-and-recorded-defaults-2026-11-18) |
 | 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
@@ -161,3 +162,28 @@ until Lore's devices are available again.
 Validation: observed real turns on scratch Marinara and in a hosted playtest
 session; no browser-driven play or persona session yet. Next action: scripted
 persona sessions and the scratch ledger.
+
+### 2026-11-18 — Stage 2 fitness service and seeded harness ledgers
+
+Claude Code session `s/a60d803335a9aa0a`, after Patch said to go ahead with the
+next work. Claimed stage 2 in `1dd5bac`.
+
+- [`service/`](../service/README.md): zero-dependency TypeScript service on
+  Node ≥ 24 (`node:sqlite`, type stripping). SQLite ledger with ingestion,
+  duplicate/revision handling, daily check-ins, grants and reversals,
+  corrections, resources, rerolls, bonus-roll receipts, projection receipts,
+  journal, status, backups and schema migrations; HTTP API v1 and a CLI.
+- Synthetic history generator from `harness/personas.json`, with delivery noise
+  (resent duplicates, revised step totals, late backdated entries).
+- Rules version 1 and defaults recorded in
+  [stage 2](02-durable-mechanics.md#rules-version-1-and-recorded-defaults-2026-11-18).
+- Harness: `serve-scratch-marinara.sh --persona ID` seeds a scratch ledger and
+  serves it on port+2; both playtest profiles now start with the `steady`
+  persona. A hosted session showed 269 activities and 84 check-ins at the
+  ledger and closed all three ports on stop.
+
+Validation: 23 tests and the typecheck pass; all five personas seeded to their
+exact schedules; HTTP read-back observed. Not done: den-lore install, Health
+Connect payload mapping (stage 4), the Marinara module (stage 3), so no
+end-to-end swipe check against the ledger yet. Next action: stage 3's fitness
+module against this API.

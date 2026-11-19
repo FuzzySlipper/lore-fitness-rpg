@@ -15,7 +15,7 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
 | [`den-serve-live.json`](den-serve-live.json) | The same with the real model on den-nimo as the default connection |
 | [`checks/swipe-persistence.mjs`](checks/swipe-persistence.mjs) | Stage 1 runtime check: projected build, projection marker and a granted item survive regenerate, swipe switch and continue |
 | [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text |
-| [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning) for the stage 2 history generator |
+| [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning), expanded by the stage 2 history generator in [`service/src/synthetic.ts`](../service/src/synthetic.ts) |
 
 ## One-time setup on den-agents
 
@@ -74,6 +74,15 @@ Stop it with `playtest stop SESSION`; that ends the scratch Marinara and the
 mock GM too. Give the mock GM a reply script with `--script FILE` (format in
 the server's header comment) to stage specific turns.
 
+## Scratch ledger
+
+`serve-scratch-marinara.sh --persona ID [--seed N]` seeds a scratch
+[fitness ledger](../service/README.md) with that persona's history (ending
+yesterday, with delivery noise and synthetic bonus dice) and serves it on
+`port+2`. Both playtest profiles pass `--persona steady`. The seed summary is in
+`ledger-seed.json` in the session's data directory. Until the stage 3 module
+exists, Marinara does not read the ledger; playtests use it through its API.
+
 ## Model choice
 
 Mechanical runs (rewards, rolls, locked results, swipes) use the mock GM.
@@ -86,7 +95,6 @@ records why. Never point the harness at Lore's own provider connections.
 
 ## Still to build
 
-- A scratch ledger fed by the stage 2 history generator from `personas.json`.
 - Scripted persona sessions that play through Marinara's UI and record rewards,
   rolls, locked results under swipes, companion voice and pacing.
 - The Inquisition ruleset installed into the scratch data directory.

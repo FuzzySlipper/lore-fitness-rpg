@@ -3,7 +3,7 @@
 # internal playtest session. Lore's installation and data are never touched.
 #
 # Usage: serve-scratch-marinara.sh --host HOST --port PORT --data DIR [--script FILE]
-#          [--model-url URL [--model NAME]]
+#          [--model-url URL [--model NAME]] [--persona ID [--seed N]]
 #
 # Environment:
 #   MARINARA_DIR  Marinara checkout to run (default ~/dev/lore-fitness-rpg-work/marinara-custom).
@@ -17,6 +17,10 @@
 # named "Mock GM" is created. It is the default unless --model-url names a real
 # OpenAI-compatible model (for example a LAN Lemonade server), in which case a
 # "Real GM" connection to that model is created and made the default instead.
+#
+# With --persona, a scratch fitness ledger (service/) is seeded with that
+# persona's synthetic history (harness/personas.json, ending yesterday, with
+# delivery noise and synthetic bonus dice) and served on PORT+2.
 set -euo pipefail
 
 host=127.0.0.1
@@ -25,6 +29,8 @@ data=""
 script=""
 model_url=""
 model="Gemma-4-26B-A4B-it-MTP-GGUF"
+persona=""
+seed=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --host) host="$2"; shift 2 ;;
@@ -33,6 +39,8 @@ while [[ $# -gt 0 ]]; do
     --script) script="$2"; shift 2 ;;
     --model-url) model_url="$2"; shift 2 ;;
     --model) model="$2"; shift 2 ;;
+    --persona) persona="$2"; shift 2 ;;
+    --seed) seed="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -50,12 +58,23 @@ node "$harness_dir/mock-gm/server.mjs" --host 127.0.0.1 --port "$gm_port" \
   --log "$data/mock-gm-requests.jsonl" "${script_args[@]}" > "$data/mock-gm.log" 2>&1 &
 gm_pid=$!
 
+ledger_pid=""
+ledger_port=$((port + 2))
+if [[ -n "$persona" ]]; then
+  service_dir="$harness_dir/../service"
+  node "$service_dir/src/cli.ts" seed --data "$data/ledger" --persona "$persona" --seed "$seed" \
+    --noise --resolve-rolls > "$data/ledger-seed.json"
+  node "$service_dir/src/main.ts" --data "$data/ledger" --host 127.0.0.1 --port "$ledger_port" \
+    > "$data/ledger.log" 2>&1 &
+  ledger_pid=$!
+fi
+
 cd "$marinara_dir"
 HOST="$host" PORT="$port" DATA_DIR="$data/marinara" AUTO_UPDATE_ENABLED=false PROVIDER_LOCAL_URLS_ENABLED=true \
   node scripts/run-server.mjs packages/server/dist/index.js > "$data/marinara.log" 2>&1 &
 marinara_pid=$!
 
-cleanup() { kill "$marinara_pid" "$gm_pid" 2>/dev/null || true; }
+cleanup() { kill "$marinara_pid" "$gm_pid" $ledger_pid 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 
 base="http://127.0.0.1:$port"
@@ -86,5 +105,5 @@ else
   add_connection "Mock GM" "http://127.0.0.1:$gm_port/v1" mock-gm true
 fi
 
-echo "scratch marinara ready at $base (mock GM on $gm_port${model_url:+, real GM $model at $model_url}, data in $data)"
+echo "scratch marinara ready at $base (mock GM on $gm_port${model_url:+, real GM $model at $model_url}${persona:+, ledger for persona $persona on $ledger_port}, data in $data)"
 wait "$marinara_pid"

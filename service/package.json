@@ -1,0 +1,20 @@
+{
+  "name": "lore-fitness-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fitness service and SQLite ledger for the Lore fitness RPG",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "cli": "node src/cli.ts",
+    "test": "node --test --test-reporter=spec \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "5.9"
+  }
+}

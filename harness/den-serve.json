@@ -1,7 +1,7 @@
 {
   "project": "lore-fitness-marinara",
   "serve": {
-    "command": "bash harness/scripts/serve-scratch-marinara.sh --host {host} --port {port} --data {session_dir}/scratch",
+    "command": "bash harness/scripts/serve-scratch-marinara.sh --host {host} --port {port} --data {session_dir}/scratch --persona steady",
     "preferredPort": 0,
     "healthUrl": "/",
     "startupTimeout": "180s",
