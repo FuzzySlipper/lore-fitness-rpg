@@ -1,6 +1,13 @@
 # Stage 3 — Marinara campaign and DSH integration
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started
+2026-11-18). Updated: 2026-11-18.
+
+Current work (2026-11-18): the Game Mode fitness module on Marinara branch
+`fitness/module` (based on `custom/agent-turn` `3050e9a40`, developed in the
+den-agents copy): ledger client, game-build projection with receipts,
+bonus-roll resolution with Marinara's dice, locked fitness facts keyed on the
+player's message, fitness routes and a Game Mode panel. DSH comes after.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: durable mechanics](02-durable-mechanics.md) ·
