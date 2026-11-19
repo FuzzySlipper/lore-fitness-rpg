@@ -1,6 +1,14 @@
 # Stage 2 — Durable activity and progression mechanics
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: In progress. Owner: Claude Code session `s/a60d803335a9aa0a` (started
+2026-11-18). Updated: 2026-11-18.
+
+Current work (2026-11-18): the service under [`service/`](../service/) — SQLite
+ledger, ingestion with duplicate/revision handling, daily check-ins, grants,
+corrections, resources, rerolls, bonus-roll receipts, projection contract,
+backup/migration and the synthetic history generator — so the stage 6 harness
+can feed persona histories to a scratch ledger. Next step after that: wire the
+harness to it.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: platform contract](01-platform-contract.md) ·
