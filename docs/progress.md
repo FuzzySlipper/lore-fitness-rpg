@@ -1,6 +1,6 @@
 # Progress and decisions
 
-Updated: 2026-11-16.
+Updated: 2026-11-19.
 
 ## Current state
 
@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch, including second chance, lock badge and restore handling; DSH next; crafting, Companions and Campaign views wait for stage 5 |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns with a scripted provider (real-model run pending); crafting, the full war-table list, Companions and Campaign views next |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -38,6 +38,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | 2026-11-18 | Stage 3 fitness module defaults: per-game switch, sheet field ids `level`/`xp`/`supplies`/`training`/`rerolls`, turn facts locked to the player's message, sighted dice pool on for fitness games, ledger's roll result as the only receipt | Agent defaults, recorded in [stage 3](03-marinara-integration.md#recorded-defaults-2026-11-18) |
 | 2026-11-18 | Campaign content is compact structured entries the Game Master expands, not long prose; this session designs and reviews, cheaper models draft bulk entries from exemplars | Patch's token-budget suggestion; format is an agent default ([stage 5](05-campaign-season.md)) |
 | 2026-11-18 | Ruleset v1: d20 + DA:I attributes; level, unspent training and unspent supplies give concrete fight bonuses, making war-table spends a readiness trade-off | Agent default ([stage 5](05-campaign-season.md#ruleset-version-1-2026-11-18)) |
+| 2026-11-19 | Lore delivery is hybrid: trigger lorebooks stay the floor for single-call Game Mode; DSH agent loops get an explorable wiki built from the same `content/pack` source, with an index, links and (later) visibility markers; broader Dragon Age material goes into the wiki only. Committed facts, story state and secrets stay deterministic, never left to a lookup | Patch's direction after discussing trigger vs wiki lore; build details are agent defaults ([stage 3](03-marinara-integration.md#dsh-team-in-game-mode-2026-11-19), [stage 5](05-campaign-season.md#lore-delivery-triggers-and-wiki-2026-11-19)) |
 | 2026-11-16 | Defaults adopted: ledger-authoritative progression projected into the Game Mode game build; daily category check-ins with caps; Inquisition ruleset package; DSH as an optional toggle built last; no checkpoint restore; sideloaded APKs, no Play Console; internal agent playtesting; canon defaults in stage 5 (the agent-not-Inquisitor default was later replaced by Lore's choice) | Agent-proposed defaults under Patch's defaults-over-questions direction |
 
 Architecture details in the stage plans are the accepted starting direction.
@@ -251,3 +252,31 @@ validator OK; installer run twice (idempotent); four played turns read as
 intended. Not done: internal full playthrough, the content matrix, an
 importable character card, crafting recipes, tuning. Next action: stage 6
 scripted persona playthroughs using this pack.
+
+### 2026-11-19 — Hybrid lore direction and the DSH team on game turns
+
+Claude Code session `s/a60d803335a9aa0a`, at Patch's direction to record the
+trigger/wiki direction and move on to the stage 3 DSH work while the Strix Halo
+servers are busy.
+
+- Decision recorded: triggers stay the floor for plain Game Mode; DSH agent
+  loops get an explorable wiki from the same pack (stages 3 and 5).
+- Marinara `fitness/module` `8b4bd6a5c`: the team turn runs for game chats;
+  Game Mode's format reminder and locked facts go to the team as per-turn notes;
+  team wiki links from "See also" lines; Training panel Agent team button and
+  last-turn status. Fetched as a branch into den-lore's `Marinara-Custom`.
+- dsh-stage (unversioned source on den-agents): `mode: "game"`, `turnNotes`,
+  `committed` review notes; the change is kept in
+  `integrations/dsh-stage/game-turn.patch`. Not deployed to den-lore.
+- Content build: entry titles `Name (type)`, one-line summaries as entry
+  descriptions, `See also` lines (up to 12 links per entry).
+- Harness: `serve-dsh-stage.sh` (den-lore's DSH release, locally) and
+  `checks/team-turn.mjs`.
+
+Validation, scripted provider only: team-turn 12/12 with the engine up, 5/5
+with it stopped (fallback); dsh-stage connection test passes on alpha.2;
+fitness-turn 24/24 and swipe-persistence 15/15 unchanged; `pnpm check` passed;
+`content/build.mjs` 0 errors. Not done: a real-model team turn, an
+unresolved-review case, a browser look at the panel, deployment. Next action:
+a real-model team turn on a Lemonade server once it's free, then visibility
+markers for secrets.

@@ -16,6 +16,8 @@ directory. Nothing here touches Lore's installation on den-lore or her data.
 | [`checks/swipe-persistence.mjs`](checks/swipe-persistence.mjs) | Stage 1 runtime check: projected build, projection marker and a granted item survive regenerate, swipe switch and continue |
 | [`checks/fitness-turn.mjs`](checks/fitness-turn.mjs) | Stage 3 check: projection onto the player's card, locked turn facts across regenerate/continue, one check-in and one roll per real activity. Needs `--persona` and the Marinara `fitness/module` build |
 | [`checks/fitness-recovery.mjs`](checks/fitness-recovery.mjs) | Stage 3 check: stops the scratch ledger (turns go on without facts, nothing locked), then restores it from an older backup (flagged, card kept, explicit accept) |
+| [`scripts/serve-dsh-stage.sh`](scripts/serve-dsh-stage.sh) | Local copy of den-lore's Marinara-DSH instance: DSH 0.2.2-alpha.2 from npm with the dsh-stage plugin built from source, on 127.0.0.1:3181. Point a scratch Marinara at it with `MARINARA_TEAM_DSH_DIR` |
+| [`checks/team-turn.mjs`](checks/team-turn.mjs) | Stage 3 check of the agent team on a fitness game: the team writes the turn, per-turn notes reach only the narrator and reviewer, regenerate keeps locked facts; `--engine-down true` with DSH stopped checks the fallback |
 | [`checks/campaign-play.mjs`](checks/campaign-play.mjs) | Plays the opening and three turns of a game installed with `content/install.mjs`, printing replies for review |
 | [`checks/real-turn.mjs`](checks/real-turn.mjs) | Real-model smoke check: two Game Mode turns and a regenerate, with timing and opening text; `--fitness` turns the module on and logs a check-in between turns |
 | [`personas.json`](personas.json) | Synthetic activity personas (steady, busy, illness, missed days, returning), expanded by the stage 2 history generator in [`service/src/synthetic.ts`](../service/src/synthetic.ts) |
@@ -76,6 +78,20 @@ a second or two later.
 Stop it with `playtest stop SESSION`; that ends the scratch Marinara and the
 mock GM too. Give the mock GM a reply script with `--script FILE` (format in
 the server's header comment) to stage specific turns.
+
+## Agent team (DSH)
+
+```bash
+node ~/dev/experiments/roleplay/dsh-stage/harness/mock-provider.mjs 18990 ~/dev/lore-fitness-rpg-work/dsh-mock.jsonl &
+bash harness/scripts/serve-dsh-stage.sh &
+MARINARA_TEAM_DSH_DIR=~/dev/lore-fitness-rpg-work/dsh-instance bash harness/scripts/serve-scratch-marinara.sh \
+  --port 7930 --data ~/dev/lore-fitness-rpg-work/scratch-team --model-url http://127.0.0.1:18990/v1 --model mock --persona steady
+```
+
+Then install a game with `content/install.mjs`, call `/api/game/start`, and run
+`checks/team-turn.mjs --chat ID --dsh-log ~/dev/lore-fitness-rpg-work/dsh-mock.jsonl --dsh-dir ~/dev/lore-fitness-rpg-work/dsh-instance`.
+The mock provider scripts each role by its tools, so the check verifies
+plumbing, not prose; use a LAN model connection for a real team turn.
 
 ## Scratch ledger
 

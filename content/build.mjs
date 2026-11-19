@@ -211,6 +211,7 @@ function worldInfo(name, list) {
       key: item.keys,
       keysecondary: [],
       comment: item.comment,
+      ...(item.description ? { description: item.description } : {}),
       content: item.content,
       constant: item.constant ?? false,
       selective: false,
@@ -222,16 +223,66 @@ function worldInfo(name, list) {
   return { name, description: `Lore fitness RPG season one, pack version ${PACK_VERSION}`, scan_depth: 4, token_budget: 2048, recursive_scanning: false, entries: entriesOut };
 }
 
+// ── Wiki shape ──
+// The same entries feed the trigger lorebook (plain Game Mode) and, through Marinara's team
+// turn, the DSH agents' wiki. Each entry gets a readable title (the entry's name in the wiki
+// index), a one-line summary (the lorebook entry's description, which Marinara never injects)
+// and a closing "See also" line naming related entries, which the team wiki turns into links.
+const TYPE_LABEL = { project: "war-table project" };
+const titleOf = (e) => `${e.header.name} (${TYPE_LABEL[e.header.type] ?? e.header.type})`;
+const wikiEntries = entries.filter((e) => !["race", "watch"].includes(e.header.type));
+const firstSentence = (text = "") => {
+  const line = text.replace(/^\s*(-|\d+\.)\s+/, "").split(/\n\s*\n|\n\s*(?:-|\d+\.)\s/)[0].replace(/\s+/g, " ").trim();
+  const sentence = line.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? line;
+  return sentence.length > 200 ? `${sentence.slice(0, 197).trimEnd()}...` : sentence;
+};
+function summaryOf({ header, sections }) {
+  const lead = { mission: "Premise", encounter: "Setup", project: "Order", season: "Premise" }[header.type] ?? "Summary";
+  return firstSentence(sections[lead]);
+}
+// Structural links (from headers) rank before name mentions; each page keeps at most 12.
+const related = new Map(wikiEntries.map((e) => [e.header.id, new Map()]));
+const link = (a, b, weight = 2) => {
+  if (a === b || !related.has(a) || !related.has(b)) return;
+  for (const [from, to] of [[a, b], [b, a]]) related.get(from).set(to, Math.max(related.get(from).get(to) ?? 0, weight));
+};
+for (const e of wikiEntries) {
+  const { id, type } = e.header;
+  const list = (value) => [].concat(value ?? []).filter((v) => v && v !== "none");
+  if (type === "mission" || type === "encounter") for (const loc of list(e.header.location)) link(id, loc);
+  if (type === "mission") {
+    for (const c of list(e.header.companions)) link(id, c);
+    for (const r of list(e.header.requires)) link(id, r);
+    for (const enc of (e.sections.Encounters ?? "").match(/\b[a-z0-9]+(?:-[a-z0-9]+)+\b/g) ?? []) link(id, enc);
+  }
+  if (type === "project") link(id, e.header.advisor);
+}
+// Named mentions: an entry whose text names another entry links to it (people, places, factions).
+const mentionable = wikiEntries.filter((e) => ["companion", "npc", "location", "faction"].includes(e.header.type));
+for (const e of wikiEntries) {
+  const text = Object.values(e.sections).join("\n");
+  for (const other of mentionable) {
+    const names = [other.header.name, other.header.name.split(" ")[0]].filter((n) => n.length > 3);
+    if (names.some((n) => new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(text))) link(e.header.id, other.header.id, 1);
+  }
+}
+const seeAlso = (e) => {
+  const titles = [...related.get(e.header.id)]
+    .sort((x, y) => y[1] - x[1] || titleOf(byId.get(x[0])).localeCompare(titleOf(byId.get(y[0]))))
+    .slice(0, 12)
+    .map(([id]) => titleOf(byId.get(id)));
+  return titles.length ? `\nSee also: ${titles.join("; ")}` : "";
+};
+
 mkdirSync(distDir, { recursive: true });
-const mainEntries = entries
-  .filter((e) => !["race", "watch"].includes(e.header.type))
-  .map((e) => ({
-    comment: `${e.header.type}:${e.header.id}`,
-    keys: [].concat(e.header.keys ?? [e.header.name]),
-    content: contentFor(e),
-    constant: e.header.type === "season",
-    order: e.header.type === "season" ? 10 : e.header.type === "companion" ? 50 : 100,
-  }));
+const mainEntries = wikiEntries.map((e) => ({
+  comment: titleOf(e),
+  description: summaryOf(e),
+  keys: [].concat(e.header.keys ?? [e.header.name]),
+  content: `${contentFor(e)}${seeAlso(e)}`,
+  constant: e.header.type === "season",
+  order: e.header.type === "season" ? 10 : e.header.type === "companion" ? 50 : 100,
+}));
 writeFileSync(join(distDir, "inquisition-season-one.lorebook.json"), `${JSON.stringify(worldInfo("Inquisition: Season One", mainEntries), null, 2)}\n`);
 
 for (const race of RACES) {

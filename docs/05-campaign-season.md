@@ -175,6 +175,34 @@ Use these unless Patch says otherwise; record any change here.
 - [ ] Connect presentation assets/theme and optional voice choices through the
   supported host tools; record where assets came from and how to regenerate them.
 
+## Lore delivery: triggers and wiki (2026-11-19)
+
+Direction (Patch, 2026-11-19): an explorable wiki is the stronger tool once an
+agent loop writes the turn, especially for the wider Dragon Age setting, where
+details matter when the story turns toward a place rather than whenever a name
+appears. Triggers stay the floor for plain single-call Game Mode, so a game is
+always playable without the team.
+
+- **One source, two forms.** `content/pack` builds both the trigger lorebooks
+  and, through Marinara's team turn, the DSH wiki (one page per entry, an
+  always-loaded index of one-line summaries, links).
+- **Built now.** Each lorebook entry is titled `Name (type)`, carries a
+  one-line summary as its description (Marinara never injects descriptions;
+  the wiki index uses them) and ends with `See also:` naming up to 12 related
+  entries: header links first (mission location, companions, prerequisites,
+  encounters, project advisor, in both directions), then name mentions.
+- **Deterministic floor.** Committed facts (fitness results, dice, spends),
+  story state and secrets never depend on a lookup. They arrive as turn notes
+  or constant entries.
+- **Next, in order.** Visibility markers so Revelations and other secrets are
+  Game Master-only pages, unlocked by story state, with the reviewer checking
+  knowledge limits; wiki-only pages for the wider setting (regions, factions,
+  history at the canon point), never built as triggers; measuring under- and
+  over-lookup per model from the team log's reads and questions.
+
+Reinstalling into an instance that already has the season lorebook reuses it,
+so a pack change needs that lorebook deleted first (stage 6 installs once).
+
 ## Companion and lore entry structure
 
 Each companion needs background, motivations, personality, speech patterns,

@@ -71,15 +71,19 @@ server extensions are not the backend integration path.
   combat benefits, choices and equipment rather than only narrative claims.
 - [x] Handle regeneration, swipes, restart, continuation and backup restore
   explicitly; retain the existing behavior for unaffected chats.
-- [ ] Expose useful status when the fitness service, DSH or optional narration is
-  unavailable while preserving completed journal/mechanical work. Done for the
-  fitness service (verified); DSH remains.
+- [x] Expose useful status when the fitness service, DSH or optional narration is
+  unavailable while preserving completed journal/mechanical work. Fitness
+  service and DSH verified on scratch; the panel reports a failed or unresolved
+  team turn.
 - [x] Record a Marinara update procedure: how to merge an upstream release into
   the custom branch with the fitness module and other local patches (see
   [Marinara update procedure](#marinara-update-procedure)).
 - [ ] DSH (after the Game Mode path works): a per-game toggle that sends DSH the
   committed facts for a turn and keeps Game Mode's structured output. The
   reviewer checks prose against committed results and companion knowledge limits.
+  Plumbing done and verified with a scripted provider (see
+  [DSH team in Game Mode](#dsh-team-in-game-mode-2026-11-19)); a real-model run
+  and an unresolved-review case remain.
 
 ## Recorded defaults (2026-11-18)
 
@@ -140,6 +144,78 @@ server extensions are not the backend integration path.
   install.
 - `pnpm check` passed on the final `3d4a4bdf5` (localization, formatting, type
   checks, production build).
+
+## DSH team in Game Mode (2026-11-19)
+
+Owner: Claude Code session `s/a60d803335a9aa0a`. Marinara branch
+`fitness/module` (commit in [progress](progress.md)); dsh-stage source in
+`~/dev/experiments/roleplay/dsh-stage` on den-agents.
+
+Direction (Patch, 2026-11-19): the DSH team is how Lore's campaign gets an
+explorable wiki; trigger lorebooks stay the floor for plain Game Mode. See
+[stage 5](05-campaign-season.md#lore-delivery-triggers-and-wiki-2026-11-19).
+
+What changed:
+
+- **Marinara gate.** The existing team turn (`custom/agent-turn`) now also runs
+  for `game` chats with `teamTurn: true`, on the same path as roleplay: not for
+  continue, impersonate, a separate Game tool connection or turns with model
+  tools attached. Fitness games qualify because one-request dice withdraw the
+  auto-attached dice tool. The game-start narration has no player message, so
+  it stays a normal call.
+- **Per-turn notes.** Game Mode merges its format reminder and depth-0 blocks
+  (the locked `<fitness_facts>`, the dice pool) into the player's message.
+  `splitGamePrompt` (`services/team-turn/team-request.ts`) cuts them off at the
+  reminder's opening line and any trailing XML blocks, and sends them as
+  `turnNotes`. The player's words alone become the chat line, so the persistent
+  lore agent's and reviewer's contexts grow only by story. System messages after
+  the conversation starts also go to the notes.
+- **dsh-stage `mode: "game"` and `turnNotes`.** Backward compatible; absent, a
+  turn is unchanged. The narrator gets the notes after the lore suggestions (the
+  stable prefix stays cacheable) and a game brief: follow the output format
+  exactly, and narrate committed results as given. The reviewer gets the notes
+  and a `committed` note kind, and is told never to flag the game's markup. The
+  lore agent never sees the notes. A change of mode starts fresh workers.
+- **Output.** The approved text goes through Game Mode's own post-processing
+  (speaker canonicalisation, GM verbs, sighted dice, skill-check tags) exactly
+  as a single call's would. Mechanics were committed before the team ran, so a
+  team failure or an odd reply cannot change them.
+- **Wiki.** `team-wiki.ts` turns an entry's closing "See also: Title; Title"
+  line into page links. The content build writes those lines, readable titles
+  and one-line summaries ([stage 5](05-campaign-season.md#lore-delivery-triggers-and-wiki-2026-11-19)).
+- **Toggle and status.** The Training panel has an "Agent team" button
+  (`POST /api/fitness/chats/:id/team`), shown when the server has a team engine
+  folder or the team is on. The panel reports the last team turn from the
+  instance's `logs/turns.jsonl`: time taken, fell back, or reviewer notes
+  unresolved. Off by default.
+
+Recorded defaults:
+
+| Item | Default |
+| --- | --- |
+| Engine folder | `MARINARA_TEAM_DSH_DIR`, else `C:\dev\Marinara-DSH` on Windows (unchanged) |
+| Review | On, two revisions (the existing team defaults); `teamTurnReview: false` turns it off |
+| Models | Every role uses the game's own connection and settings, as for roleplay |
+| Turn notes size | Sent whole (about 18k characters on a pinned ruleset game: sheet blocks and format); trimming waits for a real-model measurement |
+| Test instance | `harness/scripts/serve-dsh-stage.sh`: npm `@deepseek-ai/dsh@0.2.2-alpha.2` (the release on den-lore) with the plugin built from source, port 3181 |
+
+Deploying the plugin change to den-lore is stage 6 work: copy the built
+`lib/` into `C:\Dev\Marinara-DSH\stage` and run `stage\windows\install.ps1`
+(see the stage's `docs/harness.md`). Roleplay turns are unchanged by it.
+
+Validation (2026-11-19), scripted provider only: `harness/checks/team-turn.mjs`
+against scratch Marinara (fitness game, pinned ruleset, persona `steady`) with
+its connection pointed at the dsh-stage mock provider and the local alpha.2
+instance. 12/12 with the engine up: the team wrote the turn (lore, narrator,
+reviewer, one revision); narrator and reviewer had the format and locked facts
+as turn notes; the lore agent never saw them; the player's line was clean;
+regenerate handed the team identical locked facts; the panel showed the turn.
+5/5 with the engine stopped: the turn was saved by the normal call, the team
+log recorded the failure, and the panel said so. The dsh-stage
+`connection-test.mjs` passes on alpha.2 with the change (roleplay unchanged).
+`pnpm build` and the server type check pass. Not yet done: a real-model team
+turn (the Strix Halo servers are busy), an unresolved-review case, and a
+browser look at the panel.
 
 ## Marinara update procedure
 

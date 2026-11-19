@@ -1,0 +1,94 @@
+--- a/src/runtime.ts
++++ b/src/runtime.ts
+@@ -56,12 +56,20 @@
+   readonly message: ChatLine
+   /** Give the narrator the whole lore index. Off, it knows only the suggestions and what it asks for. */
+   readonly narratorIndex?: boolean
++  /**
++   * `game`: the host parses the reply (speaker lines, tags, choices, commands) and has
++   * already committed this turn's mechanical results. The narrator follows the format in
++   * the turn notes and the reviewer checks the committed results. Default `roleplay`.
++   */
++  readonly mode?: 'roleplay' | 'game'
++  /** Instructions and facts for this reply only, such as game state, output format and committed results. Narrator and reviewer see them; the lore agent does not. */
++  readonly turnNotes?: string
+ }
+ 
+ export interface Suggestion { readonly handle: string; readonly title: string; readonly reason: string }
+ export type Send = (event: string, data: unknown) => void
+ 
+-export const NOTE_KINDS = ['canon', 'continuity', 'invention', 'player_agency', 'deferral', 'repetition'] as const
++export const NOTE_KINDS = ['canon', 'continuity', 'invention', 'player_agency', 'deferral', 'repetition', 'committed'] as const
+ export interface Note { readonly kind: typeof NOTE_KINDS[number]; readonly quote: string; readonly change: string }
+ type Verdict = { readonly verdict: 'approve' } | { readonly verdict: 'revise'; readonly notes: readonly Note[] }
+ 
+@@ -107,7 +115,7 @@
+   const one = (choice: ModelChoice | undefined) => choice === undefined ? '-'
+     : choice.connection === undefined ? `${choice.provider}/${choice.model}`
+       : `${choice.connection.api ?? 'completions'} ${choice.connection.baseUrl} ${choice.connection.model}`
+-  return `${one(request.lore)} | ${one(request.reviewer)} | ${request.loreDir} ${request.loreVersion ?? ''}`
++  return `${one(request.lore)} | ${one(request.reviewer)} | ${request.loreDir} ${request.loreVersion ?? ''} | ${request.mode ?? 'roleplay'}`
+ }
+ 
+ /** A turn gets the same budget a reply gets today. */
+@@ -119,6 +127,13 @@
+ Lore suggestions arrive with each turn. Use lore_read to get an entry's exact text before relying on it. If the scene needs any detail about the world you haven't been given, use ask_lore rather than inventing it. Canon in lore entries is authoritative.
+ A reviewer may send you notes. When one does, write the whole reply again with those points fixed and everything else kept, as story text only.`
+ 
++const NARRATOR_GAME_BRIEF = `This is a game turn. The game engine parses your reply, so follow the output format in the turn notes exactly: speaker lines, tags, choice blocks and commands as specified there, and no other markup.
++Mechanical results in the turn notes (dice already thrown, check-ins, rewards, resources, outcomes) are committed. Narrate them as given. Never change, re-roll or invent other results, and never state numbers the turn notes don't give.`
++
++const REVIEWER_GAME_BRIEF = `This is a game turn, so the draft also contains markup the game engine parses: speaker lines, tags, choice blocks and commands. Never flag their presence or ask to remove them.
++Also check:
++- committed: the draft changes, contradicts or omits-and-replaces a committed mechanical result in the turn notes (dice, check-ins, rewards, resources, outcomes), or invents a mechanical result the notes don't give.`
++
+ const LORE_BRIEF = `You are the lore keeper for an ongoing roleplay. You never write story text.
+ You'll be shown new chat lines. Explore the lore wiki with lore_search and lore_read, following links where useful, then call suggest_lore once with the entries that matter for the next reply, each with a short reason. Suggest few entries, and only ones that matter now.
+ When another agent asks you a question, research it and call answer_question.`
+@@ -152,6 +167,8 @@
+   }
+   if (input?.draft !== undefined && input.reviewer === undefined) throw new Error('draft needs a reviewer')
+   if (!Array.isArray(input?.history)) throw new Error('history is required')
++  if (input.mode !== undefined && input.mode !== 'roleplay' && input.mode !== 'game') throw new Error('mode must be roleplay or game')
++  if (input.turnNotes !== undefined && typeof input.turnNotes !== 'string') throw new Error('turnNotes must be text')
+   if (typeof input.message?.text !== 'string' || input.message.text === '') throw new Error('message is required')
+   return { ...input, ...normalized } as TurnRequest
+ }
+@@ -459,7 +476,8 @@
+     team.reviewerSeen = lines.length
+     const context = fresh.length === 0 ? '' : `New chat lines:\n\n${transcript(fresh)}\n\n`
+     const hints = suggestions.map(item => `- ${item.handle} (${item.title}): ${item.reason}`).join('\n')
+-    await this.speak(team, team.reviewer, choice, `${context}Lore suggested for this reply:\n${hints === '' ? '(none)' : hints}\n\nDraft, round ${round + 1}:\n\n${draft}`, signal)
++    const notes = request.turnNotes === undefined || request.turnNotes === '' ? '' : `Turn notes for this reply:\n${request.turnNotes}\n\n`
++    await this.speak(team, team.reviewer, choice, `${context}Lore suggested for this reply:\n${hints === '' ? '(none)' : hints}\n\n${notes}Draft, round ${round + 1}:\n\n${draft}`, signal)
+     await this.quiet([team.reviewer], signal, () => team.verdict !== undefined)
+     const verdict: Verdict | undefined = team.verdict
+     team.send('review', { round, ms: Date.now() - started, ...(verdict ?? { verdict: 'none' }) })
+@@ -469,7 +487,7 @@
+   private narrator(team: Team): Member {
+     const { request, wiki } = team
+     return this.member('narrator', `narrator-${team.turns}`, request.narrator, workerCtx => {
+-      workerCtx.systemPrompt.section({ name: 'stage:narrator-brief', order: 65, text: NARRATOR_BRIEF })
++      workerCtx.systemPrompt.section({ name: 'stage:narrator-brief', order: 65, text: request.mode === 'game' ? `${NARRATOR_BRIEF}\n${NARRATOR_GAME_BRIEF}` : NARRATOR_BRIEF })
+       workerCtx.systemPrompt.section({ name: 'stage:persona', order: 66, text: request.persona })
+       if (request.narratorIndex !== false) workerCtx.systemPrompt.section({ name: 'stage:narrator-index', order: 67, text: `Lore index:\n${wiki.index()}` })
+       workerCtx.tools.register(readTool(wiki, handle => { team.send('lore_read', { handle }) }))
+@@ -481,7 +499,7 @@
+     const { request, wiki } = team
+     const relay = this.relay.bind(this)
+     return this.member('reviewer', 'reviewer', request.reviewer as ModelChoice, workerCtx => {
+-      workerCtx.systemPrompt.section({ name: 'stage:reviewer-brief', order: 65, text: REVIEWER_BRIEF })
++      workerCtx.systemPrompt.section({ name: 'stage:reviewer-brief', order: 65, text: team.request.mode === 'game' ? `${REVIEWER_BRIEF}\n${REVIEWER_GAME_BRIEF}` : REVIEWER_BRIEF })
+       workerCtx.systemPrompt.section({ name: 'stage:persona', order: 66, text: `The writer's voice:\n${request.persona}` })
+       workerCtx.tools.register(readTool(wiki, handle => { team.send('lore_read', { handle, by: 'reviewer' }) }))
+       workerCtx.tools.register(this.askTool(team, 'reviewer'))
+@@ -543,7 +561,8 @@
+  */
+ export function narratorPrompt(request: TurnRequest, suggestions: readonly Suggestion[]): string {
+   const hints = suggestions.map(item => `- ${item.handle} (${item.title}): ${item.reason}`).join('\n')
+-  return `${transcript(request.history)}\n\n${request.message.speaker}: ${request.message.text}\n\nLore suggestions for this reply:\n${hints === '' ? '(none)' : hints}`
++  const notes = request.turnNotes === undefined || request.turnNotes === '' ? '' : `\n\nTurn notes for this reply:\n${request.turnNotes}`
++  return `${transcript(request.history)}\n\n${request.message.speaker}: ${request.message.text}\n\nLore suggestions for this reply:\n${hints === '' ? '(none)' : hints}${notes}`
+ }
+ 
+ function readTool(wiki: LoreWiki, observe?: (handle: string) => void) {
