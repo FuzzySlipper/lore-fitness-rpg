@@ -1,6 +1,6 @@
 # Stage 6 — Stabilization, deployment and first playtest release
 
-Status: Planned; internal playtest harness in progress. Harness owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-16). Updated: 2026-11-16.
+Status: In progress. The fitness ledger runs on den-lore and a staged Marinara build with the fitness module passes its smoke test there; Lore's running Marinara is not switched yet. Owner: Claude Code session `s/a60d803335a9aa0a` (harness since 2026-11-16, deployment since 2026-11-23). Updated: 2026-11-23.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: ruleset and campaign](05-campaign-season.md)
@@ -59,14 +59,19 @@ stage 5 lorebooks to correct.
 
 ## Windows deployment work
 
-- [ ] Document the actual service install, build, start, stop and update commands.
+- [x] Document the actual service install, build, start, stop and update commands.
+  See the [den-lore runbook](#den-lore-runbook).
 - [ ] Deploy the fitness service on den-lore alongside custom Marinara and DSH.
-- [ ] Use the selected separate data directory, with backups outside the source
+  The ledger runs (2026-11-23); Marinara with the fitness module is staged and
+  smoke-tested, not yet Lore's running copy.
+- [x] Use the selected separate data directory, with backups outside the source
   checkout and a documented restoration procedure.
 - [ ] Configure the agreed Windows startup mechanism and recovery after restarts,
-  including Windows Update reboots.
-- [ ] Document ports, the firewall rule and how phone/watch clients find the
-  service, without putting credentials or signing material in Git.
+  including Windows Update reboots. Boot task and crash restart are in place;
+  the restart after a reboot is not yet observed.
+- [x] Document ports, the firewall rule and how phone/watch clients find the
+  service, without putting credentials or signing material in Git. Phone/watch
+  use `http://192.168.1.25:7900`; there are no credentials.
 - [ ] Verify startup order and reconnect when Marinara or DSH starts later.
 - [ ] After running `content/install.mjs` on den-lore, reload any Marinara tab
   Lore already has open (tablet, phone, desktop) and confirm the game appears
@@ -77,9 +82,95 @@ stage 5 lorebooks to correct.
 - [ ] Provide readable diagnostics for queued data, import failures, pending
   rolls, campaign projection and narrative fallback.
 
-The checkout is `C:\Dev\lore-fitness-rpg`; the proposed runtime data root is
-`C:\Dev\Lore-Fitness-RPG-Data`. Replace proposals with the observed final setup
-in the release runbook. Keep existing Marinara/DSH customizations intact.
+The checkout is `C:\Dev\lore-fitness-rpg`; the runtime data root is
+`C:\Dev\Lore-Fitness-RPG-Data`. The observed setup is in the
+[den-lore runbook](#den-lore-runbook). Keep existing Marinara/DSH customizations
+intact.
+
+## den-lore runbook
+
+Set up 2026-11-23 by Claude Code `s/a60d803335a9aa0a`. den-lore is Windows 11 at
+`192.168.1.25`, user `lore`; agents reach it with `~/server-access/den-lore/connect`.
+
+### Fitness ledger (running)
+
+| Item | Value |
+| --- | --- |
+| Code | `C:\Dev\lore-fitness-rpg` (clone of the public repo, `main`) |
+| Node | The newest Node ≥ 24 under fnm (`%APPDATA%\fnm\node-versions`), now v25.9.0; nothing to `npm install` |
+| Data | `C:\Dev\Lore-Fitness-RPG-Data`: `ledger.sqlite`, `backups\` (one per start, last ten), `logs\ledger.log` (rotated at 10 MB) |
+| Address | `0.0.0.0:7900`; LAN clients use `http://192.168.1.25:7900`; Marinara on the same machine uses the default `http://127.0.0.1:7900` |
+| Firewall | Inbound rule "Lore fitness ledger": TCP 7900, Private profile, local subnet only |
+| Startup | Scheduled task `lore-fitness-ledger`: at boot, as `lore` (S4U, no password stored, no window), restart every minute on failure, no time limit. It runs `deploy\windows\run-ledger.ps1`, which restarts the service 5 s after any exit |
+| Off-machine backup | Scheduled task `lore-fitness-ledger-backup` daily at 20:30 writes a consistent copy to `Documents\Lore Fitness RPG\ledger-backups\ledger-YYYYMMDD-HHmm.sqlite` (last 30 kept); the existing "Den Windows Backup" task backs up `Documents` |
+
+Commands, from an elevated PowerShell on den-lore:
+
+- Install or update: `cd C:\Dev\lore-fitness-rpg; git pull --ff-only; powershell -ExecutionPolicy Bypass -File deploy\windows\install-ledger.ps1`.
+  Safe to repeat; it replaces the tasks and firewall rule, keeps the data and
+  restarts the service.
+- Stop: `Stop-ScheduledTask lore-fitness-ledger`, then end the `node.exe` whose
+  command line has `src\main.ts` (the task's loop would restart it otherwise).
+  Start: `Start-ScheduledTask lore-fitness-ledger`.
+- Health and state: `curl http://127.0.0.1:7900/healthz`, `/v1/status`; or
+  `node src\cli.ts status --data C:\Dev\Lore-Fitness-RPG-Data` in `service\`.
+- Backup now: `Start-ScheduledTask lore-fitness-ledger-backup`.
+- Restore: stop as above; copy the chosen backup over
+  `C:\Dev\Lore-Fitness-RPG-Data\ledger.sqlite` and delete any
+  `ledger.sqlite-wal`/`-shm` beside it; start. Marinara notices a ledger older
+  than what a game already saw and asks before continuing (stage 3).
+- Remove: unregister both tasks, remove the firewall rule; the data folder and
+  backups stay until deleted by hand.
+
+Verified 2026-11-23: the installer registered both tasks and the rule; the
+ledger answered `/healthz` locally and from den-agents over the LAN; killing
+its `node.exe` brought it back within about 6 s; the backup task wrote a copy
+into Documents. Not verified: a real reboot (the boot trigger) and a Windows
+Update restart. The ledger is empty: no device or game is connected to it yet.
+
+
+### Marinara with the fitness module (staged)
+
+Lore's running Marinara is `C:\Dev\Marinara-Engine` on `local/cartesia-2.4.6`
+(Marinara 2.5.0 plus her local patches, despite the branch name), started by its
+`start.bat` through fnm on port 7860. It is one worktree of the repository in
+`C:\Dev\Marinara-Custom`; others are `Marinara-GroupTurns`,
+`Marinara-GroupTurns-i18n` and a Codex worktree under Documents, and
+Marinara-Engine has uncommitted changes (about 15 files, 2026-11-23) from
+whoever is working there. Its "Den Windows Backup" does not include
+`C:\Dev\Marinara-Data`.
+
+- `fitness/module` now contains `local/cartesia-2.4.6` up to its newest commit
+  (`ab2ea3214`, persona voices; merged in Marinara `bdfc7810e`, only the
+  changelog conflicted), so Lore's branch can later fast-forward to it.
+- A staging worktree, `C:\Dev\Marinara-Fitness-Staging` (detached at
+  `bdfc7810e`), is built with the repository's pinned pnpm 10.34.5 under Node
+  25.9.0 (`pnpm install --frozen-lockfile`, `pnpm build`; about 6 minutes).
+- [`deploy/windows/staging-smoke.ps1`](../deploy/windows/staging-smoke.ps1) runs
+  that build on loopback ports 7871 (Marinara), 7872 (scripted game master) and
+  7901 (a ledger seeded from the steady persona), installs a game and runs the
+  combat and swipe checks, then stops everything. On 2026-11-23 on den-lore:
+  combat-preparation 26/26, swipe-persistence 15/15. Lore's Marinara and the
+  real ledger were not touched.
+
+Default recorded: **Lore's running Marinara is switched at the release, not
+now.** Lore tests only the complete experience, and stage 4 (phone and watch)
+has not started, so neither the fitness module nor the campaign appears in her
+Marinara before then. The switch also needs the uncommitted work in
+Marinara-Engine committed or set aside by its owner. At release:
+
+1. Back up `C:\Dev\Marinara-Data`, Marinara-Engine's `.env` and the ledger
+   (`Start-ScheduledTask lore-fitness-ledger-backup`), and add
+   `C:\Dev\Marinara-Data` to "Den Windows Backup" or copy it under Documents.
+2. Merge Lore's newest `local/cartesia-2.4.6` into `fitness/module` again, run
+   `pnpm check` and the scratch checks (stage 3 update procedure), rebuild the
+   staging worktree and run `staging-smoke.ps1`.
+3. In Marinara-Engine, once its working tree is clean, fast-forward
+   `local/cartesia-2.4.6` to `fitness/module`, `pnpm install`, `pnpm build`,
+   restart Marinara (its `start.bat`). The fitness module reads the ledger at
+   the default `http://127.0.0.1:7900`; nothing to set in `.env`.
+4. Run `content/install.mjs --base http://127.0.0.1:7860 --name "…"` with Lore's
+   chosen name, race and class, then reload her open Marinara tabs.
 
 ## Integrated acceptance scenarios
 

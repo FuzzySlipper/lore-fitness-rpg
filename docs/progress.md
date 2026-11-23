@@ -1,6 +1,6 @@
 # Progress and decisions
 
-Updated: 2026-11-22.
+Updated: 2026-11-23.
 
 ## Current state
 
@@ -12,11 +12,11 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | Stage | Status | Owner | Next action |
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
-| [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
+| [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented and running on den-lore | Claude Code `s/a60d803335a9aa0a` | Real activity arrives once stage 4 delivers the phone and watch |
 | [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look); fights resolved by the ruleset with level, training, supplies, kit, talents and companions counting (scripted check, browser fight and real-model fights on den-m5) |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Fitness ledger running on den-lore (boot task, crash restart, daily backup into Documents); Marinara with the fitness module staged and smoke-tested there; Lore's Marinara switches at release; next, scripted persona play and the stage 4 devices |
 
 ## Confirmed decisions
 
@@ -455,3 +455,35 @@ war-table outcomes beyond the report, deployment.
 
 Next action: war-table outcomes beyond the report, or the stage 6 deployment
 groundwork.
+
+### 2026-11-23 — den-lore deployment (Claude Code `s/a60d803335a9aa0a`)
+
+Scope: stage 6 Windows deployment work, at Patch's request.
+
+Done:
+
+- The fitness ledger runs on den-lore from scheduled task `lore-fitness-ledger`
+  (boot, as `lore`, restart loop) on `0.0.0.0:7900`, data in
+  `C:\Dev\Lore-Fitness-RPG-Data`, a firewall rule for the local subnet, and a
+  daily consistent backup into `Documents` (task `lore-fitness-ledger-backup`)
+  for the existing Den Windows Backup. Scripts in `deploy/windows/`; commits
+  `ffbfe46`, `463bfdc`.
+- Marinara `fitness/module` merged Lore's newest `local/cartesia-2.4.6`
+  (`bdfc7810e`), passed `pnpm check` and the scratch checks, and was built in a
+  separate staging worktree on den-lore; `deploy/windows/staging-smoke.ps1`
+  (`bdb8295`) passed there.
+- Recorded default: Lore's running Marinara switches at the release, following
+  the steps in the [runbook](06-stabilization-and-release.md#marinara-with-the-fitness-module-staged).
+
+Validation: ledger `/healthz` locally and from den-agents; crash restart in
+about 6 s; backup task output in Documents; staging smoke on den-lore
+combat-preparation 26/26 and swipe 15/15; afterwards Lore's Marinara still
+answering on 7860 at the same commit with its uncommitted work untouched, and
+the real ledger still empty. Not verified: start after a reboot.
+
+Found: `C:\Dev\Marinara-Data` is not in the Den Windows Backup paths, and
+Marinara-Engine has uncommitted changes from another agent. Both matter for the
+release switch.
+
+Next action: scripted persona play on scratch, and stage 4 (phone and watch),
+which the release waits on.
