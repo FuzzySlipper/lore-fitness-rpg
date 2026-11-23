@@ -64,10 +64,12 @@ server extensions are not the backend integration path.
   [Campaign views](#campaign-views-2026-11-22)).
 - [x] Persist bonus rolls by the stable request identity from stage 2; reconnect
   and acknowledgment loss must return the already-resolved roll.
-- [ ] Implement Today, Journal, Character, Companions, War Table and Campaign
+- [x] Implement Today, Journal, Character, Companions, War Table and Campaign
   views appropriate to the existing Marinara interface, with reward receipts.
   All six are tabs of the Game Mode Training panel (Character is on Today).
-  Verified with scripted checks; not yet looked at in a browser.
+  Verified with scripted checks and a browser look at desktop and phone width
+  (see [Browser look](#browser-look-2026-11-23)); not yet on Lore's devices.
+  Reward receipts are covered by the scripted checks, not the browser look.
 - [ ] Connect preparation resources and training progression to actual ruleset
   combat benefits, choices and equipment rather than only narrative claims.
 - [x] Handle regeneration, swipes, restart, continuation and backup restore
@@ -303,6 +305,46 @@ Reproduced on a scratch Marinara with headless Chromium:
 Default: no Marinara change. The installer now ends by telling the operator to
 reload any open Marinara tab, and stage 6 reloads Lore's open tabs after
 installing.
+
+### Browser look (2026-11-23)
+
+Scratch Marinara on the built `fitness/module` client, a game from
+`install.mjs`, the mock game master, and headless Chromium driven by Playwright
+at 1280×800 and at 390×844 in phone mode (touch). The script went through
+Marinara's normal flow: open the game from the GM list, Start Game, the
+premise's Continue, the opening narration, then the Training button. It
+captured every tab, then ordered Audit the Stores, made Elfroot and then
+healing potions from it, tried Forge chainmail without iron, ticked The
+Waystation and moved to act 2.
+
+All five tabs render the pack's content at both sizes, with no horizontal page
+scroll. Every control made the expected request and the panel showed the
+result: the order became Done with its report, the made items reached the
+inventory, the act 2 summary and missions replaced act 1's. Supplies ran from
+15 to 11 (2 for the order, 1 for each recipe).
+
+Fixed in Marinara `ad286aa9e` after the first pass:
+
+- The panel changed height, and moved, with every tab. It now keeps one height
+  (85% of the screen) while the tabs show.
+- The tab bar scrolled away on long tabs, and on the phone Journal was cut off.
+  It now stays at the top, and narrower padding below the `sm` breakpoint fits
+  all five tabs at 390 px.
+- Costs read "1 Supplies". They use plural keys: "1 supply", "2 supplies",
+  "2 training".
+- Recipes whose materials were missing looked orderable until the server
+  refused them. Each material now shows how many the pack holds ("2 × Iron (you
+  have 0)"), counted with Game Mode's own name matching, and such recipes are
+  greyed out with an amber line. The server's refusal stays as the guard. The
+  count updates after crafting (Elfroot 2, then 1 after the potions).
+- On a phone the Training button is only an icon and had no accessible name. It
+  now has the label "Training".
+- "Rest and recovery" ran into its Log button on the phone; the row now wraps.
+
+Not covered: Lore's actual devices (stage 6 device quality), a real model, the
+Agent team section (needs a team engine), and the reward receipts list (no
+unapplied grants in this run; the scripted checks cover it). Server code did not
+change, so the server checks were not rerun; `pnpm check` passed.
 
 ## Marinara update procedure
 

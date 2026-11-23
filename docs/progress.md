@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks; browser look pending); combat benefits of preparation next |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look at desktop and phone width); combat benefits of preparation next |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -363,3 +363,27 @@ present after `page.reload()`). No application tests changed.
 
 Next action: the browser look at the panel tabs, then preparation resources in
 combat.
+
+### 2026-11-23 — Browser look at the Training panel (Claude Code `s/a60d803335a9aa0a`)
+
+Scope: look at the panel tabs in a browser and use their controls.
+
+Done on a scratch Marinara with an installed game, the mock game master and
+headless Chromium at desktop (1280×800) and phone (390×844, touch) size:
+captured every tab, ordered a project, made two recipes, tried one without its
+materials, ticked a mission and changed act. Everything worked. Fixes from what
+it showed are in Marinara `ad286aa9e`: steady panel height, sticky tab bar that
+fits a phone, "1 supply" plurals, material counts with short recipes greyed
+out, a label on the icon-only Training button, and a Today row that wrapped
+into its button. Details are in
+[stage 3](03-marinara-integration.md#browser-look-2026-11-23). The branch is
+fetched into den-lore's `C:\Dev\Marinara-Custom` as `fitness/module` only;
+nothing is deployed.
+
+Validation: the browser runs above (before and after the fixes) and `pnpm
+check`. Server code did not change; the server checks were not rerun.
+
+Not done: Lore's devices, the Agent team section in a browser, an
+unresolved-review case, preparation resources in combat, deployment.
+
+Next action: connect preparation resources and training to ruleset combat.
