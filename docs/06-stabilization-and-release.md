@@ -68,6 +68,10 @@ stage 5 lorebooks to correct.
 - [ ] Document ports, the firewall rule and how phone/watch clients find the
   service, without putting credentials or signing material in Git.
 - [ ] Verify startup order and reconnect when Marinara or DSH starts later.
+- [ ] After running `content/install.mjs` on den-lore, reload any Marinara tab
+  Lore already has open (tablet, phone, desktop) and confirm the game appears
+  in the GM list. Open tabs do not refresh that list by themselves; see
+  [stage 3](03-marinara-integration.md#campaign-views-2026-11-22).
 - [ ] Record compatible revisions of this project, Marinara, DSH, the ruleset,
   content packs and native apps, plus the Marinara update procedure.
 - [ ] Provide readable diagnostics for queued data, import failures, pending

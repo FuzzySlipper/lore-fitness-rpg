@@ -169,3 +169,4 @@ if (args["no-fitness"] !== "true") {
   }
 }
 say(`game ready: chat ${chatId} (${name}, ${race} ${klass}, pack ${manifest.id}@${manifest.version})`);
+say("reload any Marinara tab that was already open; its games list does not refresh by itself");

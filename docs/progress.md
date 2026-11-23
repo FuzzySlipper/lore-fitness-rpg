@@ -334,12 +334,32 @@ Validation (scratch Marinara and mock game master only):
 
 Not done:
 
-- A browser look. A hosted playtest page did not list the installed game in
-  its GM tab, although the server's API did. The cause is not found, so stage 6
-  must check it.
+- A browser look at the panel tabs. (The empty GM list seen earlier was a page
+  loaded before the game was created and never reloaded; see the next entry.)
 - Preparation resources tied to ruleset combat.
 - War-table outcomes beyond the report.
 
 Next action: confirm in a browser that an installed game opens and that the
 tabs render, then connect preparation resources to combat.
 
+### 2026-11-22 — Games list after an install (Claude Code `s/a60d803335a9aa0a`)
+
+Scope: find why a hosted playtest page's GM tab showed "No games yet" for a game
+the server listed.
+
+Found on a scratch Marinara with headless Chromium (Playwright): a page opened
+after `install.mjs` lists the game; a page already open keeps its old list,
+because Marinara disables refetch on window focus except for the Home feed; and
+the earlier session's F5 key presses through Playwright never reloaded the page.
+A real reload lists the game. Details and the default are in
+[stage 3](03-marinara-integration.md#campaign-views-2026-11-22).
+
+Changed: `content/install.mjs` ends with a reminder to reload open Marinara
+tabs; stage 6 reloads Lore's open tabs after installing. No Marinara change.
+
+Validation: the reproduction above (an installer game shown in a fresh page;
+absent in a page opened before a second install, also after a Playwright F5;
+present after `page.reload()`). No application tests changed.
+
+Next action: the browser look at the panel tabs, then preparation resources in
+combat.

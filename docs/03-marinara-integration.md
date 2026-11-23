@@ -284,10 +284,25 @@ passed 16/16. The checks were:
 `fitness-turn.mjs` (24/24) and `swipe-persistence.mjs` (15/15) still pass, and
 `pnpm check` (localization, formatting, lint, types, production build) passes.
 
-Not yet seen in a browser. In a hosted playtest session, the installed game
-was listed by the server's chat API and home feed, but the sidebar's GM tab
-showed "No games yet", even after reloads. I did not find out why, so stage 6
-must confirm that a game created by `install.mjs` appears in Marinara's UI.
+The panel tabs are not yet seen in a browser.
+
+**Games list after an install (resolved 2026-11-22).** In an earlier hosted
+playtest session the sidebar's GM tab showed "No games yet" for a game created
+through the API, although the server's chat API and the Home feed listed it.
+Reproduced on a scratch Marinara with headless Chromium:
+
+- A page opened after `install.mjs` lists the game in the GM tab.
+- A page already open when the installer runs keeps its old list. Marinara
+  turns off React Query's refetch on window focus (`main.tsx`); only the Home
+  feed turns it back on, which is why Home showed the game and the sidebar did
+  not.
+- Pressing F5 through Playwright, which is what the earlier session did, does
+  not reload the page, so those "reloads" never happened. A real reload lists
+  the game.
+
+Default: no Marinara change. The installer now ends by telling the operator to
+reload any open Marinara tab, and stage 6 reloads Lore's open tabs after
+installing.
 
 ## Marinara update procedure
 
