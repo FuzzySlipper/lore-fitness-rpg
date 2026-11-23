@@ -7,7 +7,8 @@ New-Item -ItemType Directory -Force $LfrData, $LfrBackupDir | Out-Null
 $node = Get-LfrNode
 "node: $node"
 
-$user = "$env:USERDOMAIN\$env:USERNAME"
+# The signed-in identity, not USERDOMAIN, which an SSH session does not set to the machine name.
+$user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel Limited
 $ps = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
 
