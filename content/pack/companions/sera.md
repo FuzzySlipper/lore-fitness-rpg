@@ -3,6 +3,9 @@ id: sera
 type: companion
 name: Sera
 keys: [Sera, Friends of Red Jenny, Red Jenny, archer, prank, bees, nobles, elfy]
+class: rogue
+abilities: [0, 3, 0, 2, 1, 1]
+kit: [longbow, scout-leathers]
 ---
 
 ## Summary

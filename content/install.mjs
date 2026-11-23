@@ -229,7 +229,54 @@ const kit = CLASS_BUILDS[klass];
   say(`${klass} kit: ${items.join(", ")} (${kit.worn.join(", ")} worn), ${STARTING_POTIONS} healing potions`);
 }
 
-// 7. The fitness module, when this Marinara has it.
+// 7. The companions: a ruleset sheet each (class and attributes from the pack), so a fight the Game
+//    Master puts them in can read their numbers, and their kit worn in their own bag. The fitness
+//    module keeps their level at the Inquisitor's and gives them their class talents.
+{
+  const pack = dist("campaign.json");
+  const meta = metadataOf(await api("GET", `/api/chats/${chatId}`));
+  const byName = new Map(pack.companions.map((c) => [c.cardName, c]));
+  const cards = meta.gameCharacterCards.map((card) => {
+    const companion = byName.get(card.name);
+    if (!companion) return card;
+    const build = card.rulesetSheet?.build ?? {};
+    return {
+      ...card,
+      rulesetSheet: {
+        v: 1,
+        ...card.rulesetSheet,
+        build: {
+          skills: {},
+          saves: {},
+          bonuses: {},
+          lists: {},
+          ...build,
+          abilities: { ...companion.abilities },
+          fields: { ...(build.fields ?? {}), class: companion.class, level: 1 },
+        },
+      },
+    };
+  });
+  await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards });
+  const missing = pack.companions.filter((c) => !cards.some((card) => card.name === c.cardName)).map((c) => c.cardName);
+  if (missing.length) say(`companions without a card in this game: ${missing.join(", ")}`);
+  const present = pack.companions.filter((c) => !missing.includes(c.name));
+  const added = await api("POST", "/api/game/inventory", {
+    chatId,
+    ops: present.flatMap((c) => c.kit.map((k) => ({ op: "add", name: k.itemName, item: k.item, count: 1, holder: c.cardName }))),
+  });
+  const refused = added.results.filter((result) => !result.ok);
+  if (refused.length) say(`companion kit: ${refused.length} item(s) not added: ${JSON.stringify(refused)}`);
+  const wear = added.inventory.filter((stack) => stack.holder && byName.has(stack.holder) && !stack.equipped);
+  if (wear.length) {
+    const worn = await api("POST", "/api/game/inventory", { chatId, ops: wear.map((stack) => ({ op: "equip", id: stack.id })) });
+    const notWorn = worn.results.filter((result) => !result.ok);
+    if (notWorn.length) say(`companion kit: ${notWorn.length} item(s) not worn: ${JSON.stringify(notWorn)}`);
+  }
+  say(`companion sheets and kit: ${present.map((c) => `${c.cardName} (${c.class})`).join(", ")}`);
+}
+
+// 8. The fitness module, when this Marinara has it.
 if (args["no-fitness"] !== "true") {
   try {
     const view = await api("POST", `/api/fitness/chats/${chatId}/enable`, { enabled: true });

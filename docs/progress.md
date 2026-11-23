@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look); fights resolved by the ruleset with level, training, supplies, kit and talents counting (scripted check and browser fight); a real-model fight next |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look); fights resolved by the ruleset with level, training, supplies, kit, talents and companions counting (scripted check, browser fight and real-model fights on den-m5) |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -421,3 +421,37 @@ board fight, Lore's devices, war-table outcomes beyond the report, deployment.
 
 Next action: a real-model fight on den-m5 with the installed game, checking the
 Game Master names bestiary opponents and narrates the committed outcome.
+
+### 2026-11-23 — Real-model fights (Claude Code `s/a60d803335a9aa0a`)
+
+Scope: play into and through a fight with the real Game Master model.
+
+Ran nine browser playthroughs on scratch Marinara with Gemma 4 26B A4B MTP on
+den-m5. Found and fixed: companions without sheets (a refused fight left the
+game stuck in combat), card names that did not match what the model calls the
+companions, a malformed combat tag becoming an opponent, the Engine's level on
+the battle stage, and generic loot. The last run: the model's tag named
+bestiary opponents and two companions, both fought on their own sheets, the
+party won, the aftermath followed the fight result, and the companions were
+healed back at the keep. Details in
+[stage 3](03-marinara-integration.md#real-model-fights-2026-11-23).
+
+Changed: companion `class`/`abilities`/`kit`/`card` headers and their export;
+the installer writes companion sheets and kits; ruleset guidance and loot
+tables; combat-preparation check sections for companions and loot. Marinara
+`abc6d41b2`: sheetless allies stay out, card-name matching, combat tag parsing,
+refusal reason on screen, sheet level for generated parties, companion level
+and talents in the sync. Fetched into den-lore's Marinara-Custom as a branch
+only.
+
+Validation: combat-preparation 26/26, campaign-views 16/16, fitness-turn
+`--ruleset` 24/24, swipe 15/15, fitness-recovery 12/12, Marinara regressions
+(combat conditions, tag attributes with the new case, parser bounds, ruleset
+combat core and contests) and `pnpm check`. The final loot tables and rest
+guidance are covered by the scripted check, not by another real-model run.
+
+Not done: a level-up during play, the sheet in a browser, Lore's devices,
+war-table outcomes beyond the report, deployment.
+
+Next action: war-table outcomes beyond the report, or the stage 6 deployment
+groundwork.

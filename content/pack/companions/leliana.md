@@ -3,6 +3,9 @@ id: leliana
 type: companion
 name: Leliana
 keys: [Leliana, Sister Nightingale, spymaster, scouts, ravens, Orlais, bard]
+class: rogue
+abilities: [0, 3, 0, 3, 1, 0]
+kit: [longbow, scout-leathers]
 ---
 
 ## Summary

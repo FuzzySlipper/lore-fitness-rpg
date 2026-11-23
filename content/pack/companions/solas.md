@@ -3,6 +3,9 @@ id: solas
 type: companion
 name: Solas
 keys: [Solas, apostate, Fade, dreaming, spirits, rift, mage, elven hedge mage]
+class: mage
+abilities: [0, 1, 3, 1, 2, 0]
+kit: [staff, scout-leathers]
 ---
 
 ## Summary

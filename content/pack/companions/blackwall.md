@@ -3,6 +3,9 @@ id: blackwall
 type: companion
 name: Blackwall
 keys: [Blackwall, Grey Warden, Warden, Ferelden, carving, wood, shield]
+class: warrior
+abilities: [3, 0, 0, 1, 1, 2]
+kit: [longsword, shield, chainmail]
 ---
 
 ## Summary

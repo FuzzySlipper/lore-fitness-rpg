@@ -3,6 +3,9 @@ id: iron-bull
 type: companion
 name: Iron Bull
 keys: [Bull, Iron Bull, Chargers, Qunari, Ben-Hassrath, tamassran, horns, tavern]
+class: warrior
+abilities: [3, 1, -1, 1, 1, 2]
+kit: [greatsword, scout-leathers]
 ---
 
 ## Summary

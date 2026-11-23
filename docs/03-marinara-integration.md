@@ -4,15 +4,16 @@ Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
 Updated: 2026-11-23.
 
-Code: Marinara branch `fitness/module` at `a4d81c963` (talents and fights;
+Code: Marinara branch `fitness/module` at `abc6d41b2` (real-model fight fixes;
+talents and fights `a4d81c963`;
 panel fixes `ad286aa9e`; campaign views `0a5e04786`; agent team `8b4bd6a5c`;
 second pass `3d4a4bdf5`; first pass `2ee03fc13`), based on
 `custom/agent-turn` `3050e9a40`. It exists in the den-agents copy
 (`~/dev/lore-fitness-rpg-work/marinara-custom`) and was fetched into
 `C:\Dev\Marinara-Custom` on den-lore as a branch only; that checkout's working
 tree was not changed, and nothing is deployed to Lore's `Marinara-Engine`.
-Next useful actions: a fight with a real model, war-table outcomes beyond the
-report, and deployment in stage 6.
+Next useful actions: war-table outcomes beyond the report, a level-up during
+play, and deployment in stage 6.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: durable mechanics](02-durable-mechanics.md) ·
@@ -73,8 +74,9 @@ server extensions are not the backend integration path.
   Reward receipts are covered by the scripted checks, not the browser look.
 - [x] Connect preparation resources and training progression to actual ruleset
   combat benefits, choices and equipment rather than only narrative claims.
-  Verified with a scripted check and a browser fight on scratch (see
-  [Fights](#fights-2026-11-23)); not yet with a real model.
+  Verified with a scripted check, a browser fight and real-model fights on
+  scratch (see [Fights](#fights-2026-11-23) and
+  [Real-model fights](#real-model-fights-2026-11-23)).
 - [x] Handle regeneration, swipes, restart, continuation and backup restore
   explicitly; retain the existing behavior for unaffected chats.
 - [x] Expose useful status when the fitness service, DSH or optional narration is
@@ -430,6 +432,45 @@ Not covered: a real model choosing bestiary names and narrating the outcome, a
 level-up during play (the persona's level is fixed; the grant is the same code
 path at any level), the character sheet in a browser, a positioned (board)
 fight, and Lore's devices.
+
+### Real-model fights (2026-11-23)
+
+Scratch Marinara with Gemma 4 26B A4B MTP on den-m5's Lemonade (reasoning off),
+a fresh warrior from `install.mjs` (steady persona, level 6), and headless
+Chromium playing through Marinara's own screens: the opening, a courtyard turn
+with Cassandra, then "Venatori agents have slipped in among the recruits. I
+draw my sword and charge them." A script chose the party's actions in the
+battle. Nine runs; the first seven mostly found problems in the script
+(multi-part narration, the guided tour and help overlay, waiting for encounter
+generation), the rest found these, all fixed:
+
+| Found | Fix |
+| --- | --- |
+| The Game Master put Cassandra in the fight and the companions had no sheets: the fight was refused and the game sat in combat with no battle screen | Every companion gets a sheet and a worn kit at install (class, attributes and kit in the companion file); the sync keeps them at the Inquisitor's level with their class talents (granted quietly); an ally with no sheet stays out of the fight with a note instead of refusing it (Marinara `abc6d41b2`); a refusal now shows its reason on the battle screen |
+| The model called them "Cassandra" and "Cullen" while the cards said "Cassandra Pentaghast" and "Cullen Rutherford", and the scene later passed the full names back | Cards are named as the Game Master calls them (`card:` in the companion file: Cassandra, Cullen, Dorian), and the start route matches a party name to the one card whose name's words fit it |
+| `[combat: location="Skyhold Courtyard" \| turn=1]` with the enemies in a separate made-up tag: Marinara built an opponent named by that text | The parser ignores a combat tag of other attributes (regression case added); the ruleset's `gm.sheetGuidance` now gives the exact tag, the bestiary names and the companions' names (no square brackets: Marinara refuses them in guidance) |
+| Party levels showed the Engine's "Lv.3/Lv.4" | The battle reads the sheet's level for a generated party too |
+| Loot was Game Mode's generic table ("Mithril Chainmail", "Lockpick Set") | Ruleset loot tables: Venatori spoils, Red Templar spoils and what a demon leaves behind, all potions and workshop materials (iron, elfroot), named by every bestiary opponent |
+
+With those in, the last run went as intended. The Game Master wrote
+`[combat: enemies="Venatori Gladiator, Venatori Gladiator, Venatori Spellbinder,
+Venatori Spellbinder" allies="Cassandra, Cullen"]`; Cassandra and Blackwall
+fought on their own sheets and kit at level 6 (Health 58, Defense 15); the
+Inquisitor rolled +4 with Drilled +2; the party won in seven rounds; the
+aftermath was narrated from the fight result; and on "We make our way back to
+the keep" the Game Master restored the companions' health with sheet commands
+(a party-wide rest command it also wrote was malformed and refused, harmlessly).
+An earlier run with the companions left out ended in defeat after six rounds
+alone against four; the narration handled it well ("stay down, let the healers
+reach you"), and the guidance now says a defeat never kills anyone and the camp
+rest restores the party.
+
+Not settled: the model sometimes writes `[state: combat]` and leaves the
+encounter to Marinara's own generation, which worked but takes about a minute;
+it does not always use the camp rest; and the battle stage overlaps portraits
+with five fighters (Marinara's layout). The scripted
+[`combat-preparation.mjs`](../harness/checks/combat-preparation.mjs) now covers
+companions, a fuller ally name, a sheetless ally and loot (26/26).
 
 ## Marinara update procedure
 

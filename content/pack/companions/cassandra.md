@@ -3,6 +3,10 @@ id: cassandra
 type: companion
 name: Cassandra Pentaghast
 keys: [Cassandra, Seeker, Pentaghast, Right Hand of the Divine, Nevarra, Chantry, sword]
+card: Cassandra
+class: warrior
+abilities: [3, 0, 0, 0, 2, 2]
+kit: [longsword, shield, chainmail]
 ---
 
 ## Summary

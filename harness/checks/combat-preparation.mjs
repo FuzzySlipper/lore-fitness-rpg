@@ -12,6 +12,11 @@
 //  - Choice: spending supplies and training at the war table lowers health and Drilled in the next
 //    fight, so preparation is a trade rather than only a story claim.
 //  - A talent the player removes is not added back by a later sync.
+//  - Companions: each has a sheet at the Inquisitor's level with their class talents, fights beside
+//    the player, and an ally the Game Master names who has no sheet stays out of the fight instead
+//    of refusing it.
+//  - Loot: a won fight drops the defeated creature's Inquisition loot table (workshop materials and
+//    potions), never Game Mode's generic loot.
 //
 // Usage: node combat-preparation.mjs --base http://127.0.0.1:7910 --chat CHAT_ID
 //          --mock-log DATA/mock-gm-requests.jsonl
@@ -76,14 +81,18 @@ async function turn(userMessage) {
 /** Start a fight on the anchor message as the client does: plain names and placeholder numbers, which
  *  a ruleset fight replaces with the sheet's and the bestiary's. The opponent is the bestiary's
  *  Red Templar Behemoth (70 health), so it lasts long enough to try every option. */
-async function startFight(anchor) {
+async function startFight(anchor, allies = [], enemy = "Red Templar Behemoth") {
   const { personaId } = await chat();
+  const placeholder = { hp: 60, maxHp: 60, attack: 10, defense: 6, speed: 6, level: 1 };
   const started = await api("POST", "/api/game/combat/director/start", {
     chatId,
     anchor,
     style: "ruleset",
-    party: [{ id: `persona:${personaId}`, name: (await playerCard()).name, hp: 60, maxHp: 60, attack: 10, defense: 6, speed: 6, level: 1, side: "player" }],
-    enemies: [{ id: "enemy-0", name: "Red Templar Behemoth", hp: 44, maxHp: 44, attack: 11, defense: 6, speed: 6, level: 3, side: "enemy" }],
+    party: [
+      { id: `persona:${personaId}`, name: (await playerCard()).name, ...placeholder, side: "player" },
+      ...allies.map((name, i) => ({ id: `ally-${i}`, name, ...placeholder, side: "player" })),
+    ],
+    enemies: [{ id: "enemy-0", name: enemy, hp: 44, maxHp: 44, attack: 11, defense: 6, speed: 6, level: 3, side: "enemy" }],
   });
   return { anchor, session: started.session, playerId: `persona:${personaId}` };
 }
@@ -216,6 +225,50 @@ build = (await playerCard()).rulesetSheet.build;
 record("a removed talent is not added back", !talentNames().includes("War Cry") && talentNames().length === expectedTalents.length - 1);
 await turn("We regroup in the courtyard.");
 record("talents are announced only once", !lastFacts().includes("New talent at level"));
+
+// 5. Companions fight beside the Inquisitor, at the same level, with their own kit and talents.
+meta = await metadata();
+const level = (await view()).character.level;
+const companionCards = meta.fitnessCampaign.companions.map((c) => ({ pack: c, card: meta.gameCharacterCards.find((card) => card.name === c.cardName) }));
+record(
+  "every companion has a sheet at the Inquisitor's level",
+  companionCards.every(({ card }) => card?.rulesetSheet?.build?.fields?.level === level),
+  companionCards.map(({ pack, card }) => `${pack.cardName} ${card?.rulesetSheet?.build?.fields?.class ?? "?"} ${card?.rulesetSheet?.build?.fields?.level ?? "?"}`).join(", "),
+);
+const cassandra = companionCards.find(({ pack }) => pack.id === "cassandra").card;
+const cassandraTalents = (cassandra.rulesetSheet.build.lists.talents ?? []).map((row) => row.name);
+record("companions get their class talents, without announcing them", cassandraTalents.includes("Rally") && !lastFacts().includes("Cassandra"), cassandraTalents.join(", "));
+const companionWorn = (meta.gameInventory ?? []).filter((stack) => stack.holder === cassandra.name && stack.equipped).map((stack) => stack.name);
+record("companions wear their own kit", companionWorn.includes("Inquisition longsword") && companionWorn.includes("Inquisition chainmail"), companionWorn.join(", "));
+const thirdTurn = await turn("I draw my sword beside Cassandra.");
+fight = await startFight(thirdTurn.id, ["Cassandra Pentaghast", "Recruit Tamsin"]); // named more fully than her card
+const ally = fight.session.ruleset.combatants.find((c) => c.name === cassandra.name);
+record("a companion named more fully than her card fights with her sheet and her own kit", Boolean(ally) && ally.defense === 10 + cassandra.rulesetSheet.build.abilities.dexterity + 5, ally ? `health ${ally.health.max}, Defense ${ally.defense}` : "not in the fight");
+record(
+  "an ally with no sheet stays out instead of refusing the fight",
+  !fight.session.ruleset.combatants.some((c) => c.name === "Recruit Tamsin") &&
+    !fight.session.party.some((p) => p.name === "Recruit Tamsin") &&
+    (fight.session.ruleset.adjustments ?? []).some((line) => line.includes("Recruit Tamsin")),
+);
+
+// 6. A won fight drops the creature's own loot table: a Shade leaves elfroot or a potion.
+const lootTurn = await turn("I draw my sword as something stirs in the Fade-touched cellar.");
+fight = await startFight(lootTurn.id, [], "Shade");
+const bagBefore = new Map(((await metadata()).gameInventory ?? []).map((stack) => [stack.id, stack.quantity]));
+for (let round = 0; round < 20 && fight.session.stage !== "finished" && !fight.session.outcome; round++) {
+  options = await untilPlayer(fight);
+  if (fight.session.stage === "finished" || fight.session.outcome) break;
+  const swing = options.find((o) => o.label === "Inquisition longsword");
+  if (swing) await command(fight, { type: "ruleset", optionId: swing.id, targetIds: swing.targetIds.slice(0, 1) });
+  if (fight.session.stage !== "finished" && !fight.session.outcome) await command(fight, { type: "ruleset", optionId: "end-turn", targetIds: [] });
+}
+const bagAfter = (await metadata()).gameInventory ?? [];
+const gained = bagAfter.filter((stack) => stack.quantity > (bagBefore.get(stack.id) ?? 0)).map((stack) => stack.name);
+record(
+  "a won fight drops the creature's Inquisition loot",
+  fight.session.outcome === "victory" && gained.length > 0 && gained.every((name) => ["Elfroot", "Healing potion"].includes(name)),
+  `${fight.session.outcome ?? fight.session.stage}; gained ${gained.join(", ") || "nothing"}`,
+);
 
 const failed = results.filter((r) => !r.ok).length;
 process.stdout.write(`\n${results.length - failed}/${results.length} checks passed\n`);

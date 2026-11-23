@@ -709,7 +709,7 @@
   ],
   "gm": {
     "checkGuidance": "This game uses the Inquisition rules. When a risky action could go more than one way, call for a check with a skill or save from the sheet and pick a difficulty from the ladder. The Engine rolls a d20 and adds the sheet's numbers; never write the result yourself. Grant advantage for good preparation, a companion's help or clever use of the scene.",
-    "sheetGuidance": "The sheets are authoritative. Level, Experience, Supplies, Training and Fade-touched second chances come from the player's real training through the fitness journal: never change them with sheet commands and never invent rewards; the turn's fitness facts say what was earned or spent. Spend health, stamina or mana and focus as the fiction demands. Unspent training sharpens attacks and unspent supplies add health, so spending them at the war table trades a little readiness for progress elsewhere.",
+    "sheetGuidance": "The sheets are authoritative. Level, Experience, Supplies, Training and Fade-touched second chances come from the player's real training through the fitness journal: never change them with sheet commands and never invent rewards; the turn's fitness facts say what was earned or spent. Spend health, stamina or mana and focus as the fiction demands. Unspent training sharpens attacks and unspent supplies add health, so spending them at the war table trades a little readiness for progress elsewhere. To start a fight, use the combat tag with its enemies attribute, for example combat: enemies=\"Venatori Gladiator, Venatori Spellbinder\" allies=\"Cassandra\" inside the usual square brackets. enemies lists each opponent, repeated for several, by these names: Shade, Wraith, Despair Demon, Rage Demon, Venatori Gladiator, Venatori Spellbinder, Red Templar, Red Templar Horror, Red Templar Behemoth, Venatori Magister. allies names the companions fighting beside the Inquisitor: Solas, Cassandra, Leliana, Cullen, Dorian, Sera, Iron Bull or Blackwall. Never put other attributes in the combat tag. The rules then resolve the fight; narrate what the fight log says happened. A defeat never kills the Inquisitor or a companion: they are carried to safety, and when they reach Skyhold or a camp, give each of them the camp rest with the sheet rest command.",
     "sheetSummary": {
       "fields": [
         "class",
@@ -850,6 +850,69 @@
             "id": "gold",
             "label": "gold",
             "value": 10000
+          }
+        ]
+      }
+    ],
+    "lootTables": [
+      {
+        "id": "venatori_spoils",
+        "label": "Venatori spoils",
+        "rolls": "1d2",
+        "entries": [
+          {
+            "item": "quartermaster/healing-potion",
+            "weight": 3
+          },
+          {
+            "item": "quartermaster/iron-ingot",
+            "weight": 3,
+            "count": "1d2"
+          },
+          {
+            "item": "quartermaster/elfroot",
+            "weight": 2,
+            "count": "1d2"
+          },
+          {
+            "item": "quartermaster/daggers",
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "templar_spoils",
+        "label": "Red Templar spoils",
+        "rolls": "1d2",
+        "entries": [
+          {
+            "item": "quartermaster/iron-ingot",
+            "weight": 4,
+            "count": "1d2"
+          },
+          {
+            "item": "quartermaster/healing-potion",
+            "weight": 2
+          },
+          {
+            "item": "quartermaster/shield",
+            "weight": 1
+          }
+        ]
+      },
+      {
+        "id": "fade_residue",
+        "label": "What a demon leaves behind",
+        "rolls": 1,
+        "entries": [
+          {
+            "item": "quartermaster/elfroot",
+            "weight": 2,
+            "count": "1d2"
+          },
+          {
+            "item": "quartermaster/healing-potion",
+            "weight": 1
           }
         ]
       }
@@ -1380,7 +1443,8 @@
                 },
                 "reach": 2
               }
-            ]
+            ],
+            "loot": "fade_residue"
           }
         },
         {
@@ -1417,7 +1481,8 @@
                 },
                 "reach": 12
               }
-            ]
+            ],
+            "loot": "fade_residue"
           }
         },
         {
@@ -1462,7 +1527,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "loot": "fade_residue"
           }
         },
         {
@@ -1507,7 +1573,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "loot": "fade_residue"
           }
         },
         {
@@ -1544,7 +1611,8 @@
                 },
                 "reach": 2
               }
-            ]
+            ],
+            "loot": "venatori_spoils"
           }
         },
         {
@@ -1581,7 +1649,8 @@
                 },
                 "reach": 12
               }
-            ]
+            ],
+            "loot": "venatori_spoils"
           }
         },
         {
@@ -1618,7 +1687,8 @@
                 },
                 "reach": 2
               }
-            ]
+            ],
+            "loot": "templar_spoils"
           }
         },
         {
@@ -1681,7 +1751,8 @@
                   "from": 5
                 }
               }
-            ]
+            ],
+            "loot": "templar_spoils"
           }
         },
         {
@@ -1726,7 +1797,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "loot": "templar_spoils"
           }
         },
         {
@@ -1789,7 +1861,8 @@
                   "from": 5
                 }
               }
-            ]
+            ],
+            "loot": "venatori_spoils"
           }
         }
       ]

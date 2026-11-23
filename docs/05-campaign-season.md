@@ -141,8 +141,12 @@ Use these unless Patch says otherwise; record any change here.
 Version 2 (2026-11-23) adds fight mechanics to every talent, `talent_power`,
 `talent_attack` and `talent_dc`, a Hidden condition (advantage on the next
 attack), a drinkable healing potion (2d8 + 4, used up), and removes the
-duplicate Seasoned fight bonus. Details and the class builds and starting kits
-are in [stage 3](03-marinara-integration.md#fights-2026-11-23).
+duplicate Seasoned fight bonus. Later the same day: loot tables (Venatori
+spoils, Red Templar spoils, what a demon leaves behind) named by every
+opponent, and Game Master guidance on the exact combat tag, the bestiary names
+and resting after a defeat. Companion files carry `class`, `abilities`, `kit`
+and an optional `card` name. Details are in
+[stage 3](03-marinara-integration.md#fights-2026-11-23).
 
 ## Original deliverables to retain
 

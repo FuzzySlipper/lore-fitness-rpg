@@ -40,7 +40,7 @@ const SECTIONS = {
   recipe: ["At the workshop"],
 };
 const HEADER = {
-  companion: ["id", "name", "keys"],
+  companion: ["id", "name", "keys", "class", "abilities", "kit"],
   npc: ["id", "name", "keys"],
   faction: ["id", "name", "keys"],
   location: ["id", "name", "keys"],
@@ -138,6 +138,14 @@ for (const entry of entries) {
   const limits = { companion: [250, 900], mission: [150, 650], encounter: [80, 350], project: [50, 250], npc: [60, 300], faction: [60, 300], location: [80, 350], race: [120, 600], watch: [30, 300], season: [150, 700], recipe: [15, 120] }[type];
   if (total < limits[0] || total > limits[1]) warn(file, `${total} words; expected ${limits[0]}–${limits[1]}`);
   if (type === "companion" && listItems(sections["Dialogue examples"] ?? "").length < 4) fail(file, "needs at least 4 dialogue examples");
+  if (type === "companion") {
+    // What the companion fights with: a ruleset sheet the installer writes, kept at the Inquisitor's level.
+    if (!["warrior", "rogue", "mage"].includes(header.class)) fail(file, "class must be warrior, rogue or mage");
+    const scores = [].concat(header.abilities ?? []).map(Number);
+    if (scores.length !== 6 || scores.some((n) => !Number.isInteger(n) || n < -1 || n > 6))
+      fail(file, "abilities must be six whole numbers from -1 to 6 (STR, DEX, MAG, CUN, WIL, CON)");
+    for (const id of [].concat(header.kit ?? [])) if (!items.has(id)) fail(file, `kit item "${id}" is not in the ruleset's ${ITEM_CATALOG} catalog`);
+  }
   if (type === "mission") {
     if (!["1", "2", "3", "any"].includes(header.act)) fail(file, "act must be 1, 2, 3 or any");
     if (!["story", "operation", "companion", "recovery"].includes(header.kind)) fail(file, "kind must be story, operation, companion or recovery");
@@ -326,7 +334,9 @@ const setup = {
     "Tharsis means to break the march on Adamant before it begins.",
   ],
   startingNpcs: [...COMPANIONS.map((id) => ({ name: byId.get(id)?.header.name ?? id })), ...originals.map((name) => ({ name }))],
-  characterCards: [{ name: inquisitorName }, ...COMPANIONS.map((id) => ({ name: byId.get(id)?.header.name ?? id }))],
+  // A companion's card is named as the Game Master calls them ("Cassandra"), so dialogue tags and a
+  // fight's allies find it; `card:` in the companion file gives that name where it differs.
+  characterCards: [{ name: inquisitorName }, ...COMPANIONS.map((id) => ({ name: byId.get(id)?.header.card ?? byId.get(id)?.header.name ?? id }))],
 };
 writeFileSync(join(distDir, "game-setup.json"), `${JSON.stringify(setup, null, 2)}\n`);
 // The Game Mode panel's campaign data (war table, crafting, companions, acts and missions), stored on
@@ -394,6 +404,12 @@ const campaign = {
     summary: firstSentence(e.sections.Summary),
     role: firstSentence(e.sections["With the Inquisition"]),
     training: firstSentence(e.sections["Training role"]),
+    cardName: e.header.card ?? e.header.name,
+    class: e.header.class,
+    abilities: Object.fromEntries(
+      ["strength", "dexterity", "magic", "cunning", "willpower", "constitution"].map((id, i) => [id, Number([].concat(e.header.abilities)[i])]),
+    ),
+    kit: [].concat(e.header.kit ?? []).map((id) => ({ item: `${ITEM_CATALOG}/${id}`, itemName: items.get(id).label })),
   })),
   missions: ofType("mission")
     .map((e) => ({

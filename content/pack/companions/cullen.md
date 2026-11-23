@@ -3,6 +3,10 @@ id: cullen
 type: companion
 name: Cullen Rutherford
 keys: [Cullen, Commander, Rutherford, training yard, the troops]
+card: Cullen
+class: warrior
+abilities: [3, 1, 0, 1, 1, 1]
+kit: [longsword, shield, chainmail]
 ---
 
 ## Summary

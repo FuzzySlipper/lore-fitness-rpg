@@ -3,6 +3,10 @@ id: dorian
 type: companion
 name: Dorian Pavus
 keys: [Dorian, Pavus, Tevinter, magister, altus, Minrathous, mage, moustache]
+card: Dorian
+class: mage
+abilities: [0, 1, 3, 2, 1, 0]
+kit: [staff, scout-leathers]
 ---
 
 ## Summary
