@@ -4,13 +4,14 @@ Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
 Updated: 2026-11-22.
 
-Code: Marinara branch `fitness/module` at `3d4a4bdf5` (first pass `2ee03fc13`), based on
+Code: Marinara branch `fitness/module` at `0a5e04786` (campaign views; agent team
+`8b4bd6a5c`; second pass `3d4a4bdf5`; first pass `2ee03fc13`), based on
 `custom/agent-turn` `3050e9a40`. It exists in the den-agents copy
 (`~/dev/lore-fitness-rpg-work/marinara-custom`) and was fetched into
 `C:\Dev\Marinara-Custom` on den-lore as a branch only; that checkout's working
 tree was not changed, and nothing is deployed to Lore's `Marinara-Engine`.
-Next useful actions: DSH as a per-game toggle; crafting, Companions and
-Campaign views once stage 5 content exists; deployment in stage 6.
+Next useful actions: tie preparation resources to ruleset combat, war-table
+outcomes beyond the report, and deployment in stage 6.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: durable mechanics](02-durable-mechanics.md) ·
@@ -59,14 +60,14 @@ server extensions are not the backend integration path.
   to re-resolve a locked result, recorded in the ledger.
 - [ ] Committed UI actions for spending preparation resources, war-table
   operations and crafting, recorded in the ledger rather than narrated turns.
-  War-table spends done (three default projects); crafting waits for the stage 5
-  item catalog.
+  Done: war-table projects and workshop recipes from the campaign pack (see
+  [Campaign views](#campaign-views-2026-11-22)).
 - [x] Persist bonus rolls by the stable request identity from stage 2; reconnect
   and acknowledgment loss must return the already-resolved roll.
 - [ ] Implement Today, Journal, Character, Companions, War Table and Campaign
   views appropriate to the existing Marinara interface, with reward receipts.
-  Today, Journal, Character and War Table are in the Game Mode Training panel;
-  Companions and Campaign wait for stage 5 content.
+  All six are tabs of the Game Mode Training panel (Character is on Today).
+  Verified with scripted checks; not yet looked at in a browser.
 - [ ] Connect preparation resources and training progression to actual ruleset
   combat benefits, choices and equipment rather than only narrative claims.
 - [x] Handle regeneration, swipes, restart, continuation and backup restore
@@ -103,7 +104,7 @@ server extensions are not the backend integration path.
 | Lock badge | A lock icon with an explanation in the reply's action row when the player message it answers has locked fitness facts |
 | Ledger restored from an older backup | Detected when the ledger's newest journal entry is older than one this game already saw. The module stops writing the card and adding facts and shows a warning; "Continue from the journal as it is now" resumes from the restored ledger. Restoring the newer ledger backup instead clears the condition by itself |
 | Marinara restored from an older backup | Nothing special: the next sync rewrites the card from the ledger and the next turn's facts cover everything since the restored game last saw |
-| War table | Three placeholder projects (send scouts: 2 supplies; drill the recruits: 2 training; provision the next expedition: 4 supplies) until stage 5 supplies real ones |
+| War table | The campaign pack's projects (14 in season one), replacing the three placeholders; see [Campaign views](#campaign-views-2026-11-22) |
 
 ## Validation (2026-11-18)
 
@@ -246,6 +247,47 @@ These results come from scratch runs, not a browser or device test.
 
 Not yet done: an unresolved-review case, a browser look at the panel, and
 deployment to den-lore.
+
+## Campaign views (2026-11-22)
+
+The Training panel now has tabs: Today (character, second chance, new rewards,
+check-ins, agent team), War table (projects and the workshop), Companions,
+Campaign and Journal.
+
+| Item | Default |
+| --- | --- |
+| Where the choices come from | `content/build.mjs` writes `dist/campaign.json` (projects, recipes, companions, acts, missions); `content/install.mjs` stores it on the game chat as metadata `fitnessCampaign`. `install.mjs --chat ID --refresh-campaign` rewrites it after a pack update without touching progress |
+| Where progress lives | Metadata `fitnessCampaignState` (act, missions done, projects done, things made, pending results), written only by the module. Without a pack the tabs say none is installed |
+| War-table projects | Shown when their act is at or before the current act (`act: any` always). Each one is done once: the ledger spend comes first (idempotent by key), then the project is recorded. Ordering it again, or a later act's project, is refused |
+| Project results | The project's Report and Unlocks text, with pack ids turned into names, waits as a pending line. The next turn's locked facts carry it once; a regenerate of that turn reads the same facts; the line is then cleared |
+| Workshop | Recipes in `content/pack/crafting/` (11 in season one) make quartermaster items from supplies, some also using materials (elfroot, iron). Materials are checked in the Inquisitor's own pack before anything is spent. Then supplies are spent in the ledger, and the materials are taken and the item added through Game Mode's own inventory change, in the same write as the record. If the materials vanished between the check and the write (another change got there first), the item is still made and a warning is logged, because the supplies are already spent |
+| Recipe costs | Supplies only, 1–2 per recipe, so the workshop draws on the same resource whose unspent amount gives extra health in fights |
+| Acts and missions | The Campaign tab sets the current act (any act, so mistakes can be undone) and ticks missions done. Every turn's facts state the act, missions done and projects done. Story progress is never gated by activity |
+| Companions tab | Each companion's summary, role and training line from the pack, with their missions open so far and a tick on those done. No approval score: the pack defines none and stage 5 left approval to the story |
+
+Validation (2026-11-22), scratch Marinara with the mock game master and the
+`steady` persona ledger:
+[`harness/checks/campaign-views.mjs`](../harness/checks/campaign-views.mjs)
+passed 16/16. The checks were:
+
+- The pack was on the game, and the game started in act 1.
+- A project spent its cost once. A retry with the same key spent nothing.
+- A repeat order and a later act's project were refused (409).
+- Two recipes put Elfroot and then Healing potions into the inventory, using up
+  one Elfroot.
+- Chainmail without iron was refused with supplies unchanged.
+- The next turn's facts carried the report and what the workshop made. A
+  regenerate read the same facts, and the pending results were then cleared.
+- After setting act 2 and ticking a mission, the next turn stated both and did
+  not repeat the report. An act 2 project then opened.
+
+`fitness-turn.mjs` (24/24) and `swipe-persistence.mjs` (15/15) still pass, and
+`pnpm check` (localization, formatting, lint, types, production build) passes.
+
+Not yet seen in a browser. In a hosted playtest session, the installed game
+was listed by the server's chat API and home feed, but the sidebar's GM tab
+showed "No games yet", even after reloads. I did not find out why, so stage 6
+must confirm that a game created by `install.mjs` appears in Marinara's UI.
 
 ## Marinara update procedure
 

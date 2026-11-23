@@ -94,9 +94,19 @@ reactions` (one line per companion id), `Address and titles`, `Backstory hooks`.
 Header: `id`, `type`, `companion`. Sections: `Raven notes` (short in-character
 notification lines, under 90 characters each), `Drill cues`, `Dice flavor`.
 
+### `type: recipe` (`pack/crafting/<id>.md`)
+
+Header: `id`, `type`, `name`, `item` (a `quartermaster` item id), `count`,
+`cost` (`supplies N`), `materials` (quartermaster ids with counts, e.g.
+`[elfroot x1]`, or `[]`), `keys`. Section: `At the workshop` (who makes it and
+how, 15–120 words, as facts the Game Master narrates). Recipes are not lorebook
+entries; the Training panel's workshop offers them.
+
 ## Building
 
 `node content/build.mjs` reads `pack/` and writes `dist/`: lorebooks in
 SillyTavern world-info format (which Marinara imports), one race lorebook per
-race, the Game Mode setup JSON for `POST /api/game/setup/apply-json`, and a
-manifest with the pack version and the ruleset it needs.
+race, the Game Mode setup JSON for `POST /api/game/setup/apply-json`, `campaign.json`
+(the war table, workshop, companions, acts and missions the Training panel
+offers; `install.mjs` stores it on the game), and a manifest with the pack
+version and the ruleset it needs.

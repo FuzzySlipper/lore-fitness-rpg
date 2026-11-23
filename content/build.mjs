@@ -37,6 +37,7 @@ const SECTIONS = {
   race: ["How the world sees them", "Companion reactions", "Address and titles", "Backstory hooks"],
   watch: ["Raven notes", "Drill cues", "Dice flavor"],
   season: ["Premise", "Acts", "How the story moves", "Original characters"],
+  recipe: ["At the workshop"],
 };
 const HEADER = {
   companion: ["id", "name", "keys"],
@@ -49,6 +50,7 @@ const HEADER = {
   race: ["id", "race"],
   watch: ["id", "companion"],
   season: ["id", "name", "keys"],
+  recipe: ["id", "name", "item", "count", "cost", "keys"],
 };
 
 const errors = [];
@@ -103,6 +105,13 @@ const listItems = (text) => text.split("\n").filter((line) => /^\s*(-|\d+\.)\s+/
 
 const ruleset = JSON.parse(readFileSync(join(root, "ruleset/inquisition.json"), "utf8"));
 const opponentIds = new Set(ruleset.catalogs.find((c) => c.id === "opponents").entries.map((e) => e.id));
+const ITEM_CATALOG = "quartermaster";
+const items = new Map(ruleset.catalogs.find((c) => c.id === ITEM_CATALOG).entries.map((e) => [e.id, e]));
+const materialsOf = (header) =>
+  [].concat(header.materials ?? []).map((m) => {
+    const [, id, count] = m.match(/^(\S+?)(?:\s+x(\d+))?$/) ?? [];
+    return { id, count: Number(count ?? 1) };
+  });
 
 const entries = walk(packDir).map(parse).filter(Boolean);
 const byId = new Map();
@@ -126,7 +135,7 @@ for (const entry of entries) {
   for (const s of expected) if (s in sections && !sections[s]) fail(file, `section "${s}" is empty`);
   const body = expected.map((s) => sections[s] ?? "").join("\n");
   const total = words(body);
-  const limits = { companion: [250, 900], mission: [150, 650], encounter: [80, 350], project: [50, 250], npc: [60, 300], faction: [60, 300], location: [80, 350], race: [120, 600], watch: [30, 300], season: [150, 700] }[type];
+  const limits = { companion: [250, 900], mission: [150, 650], encounter: [80, 350], project: [50, 250], npc: [60, 300], faction: [60, 300], location: [80, 350], race: [120, 600], watch: [30, 300], season: [150, 700], recipe: [15, 120] }[type];
   if (total < limits[0] || total > limits[1]) warn(file, `${total} words; expected ${limits[0]}–${limits[1]}`);
   if (type === "companion" && listItems(sections["Dialogue examples"] ?? "").length < 4) fail(file, "needs at least 4 dialogue examples");
   if (type === "mission") {
@@ -143,6 +152,12 @@ for (const entry of entries) {
     }
   }
   if (type === "project" && !/^(supplies|training) \d+$/.test(header.cost ?? "")) fail(file, 'cost must look like "supplies 3" or "training 2"');
+  if (type === "recipe") {
+    if (!/^supplies \d+$/.test(header.cost ?? "")) fail(file, 'cost must look like "supplies 2"');
+    if (!items.has(header.item)) fail(file, `item "${header.item}" is not in the ruleset's ${ITEM_CATALOG} catalog`);
+    if (!/^[1-9]\d?$/.test(header.count ?? "")) fail(file, "count must be 1–99");
+    for (const m of materialsOf(header)) if (!items.has(m.id)) fail(file, `material "${m.id}" is not in the ruleset's ${ITEM_CATALOG} catalog`);
+  }
   if (type === "race" && !RACES.includes(header.race)) fail(file, `race must be one of ${RACES.join(", ")}`);
   if (/\b\d+\s*XP\b|\bgain(s)? (a )?level\b|\blevel up\b/i.test(body) && type !== "season") warn(file, "mentions XP or levelling; mechanics belong to the runtime");
 }
@@ -230,7 +245,7 @@ function worldInfo(name, list) {
 // and a closing "See also" line naming related entries, which the team wiki turns into links.
 const TYPE_LABEL = { project: "war-table project" };
 const titleOf = (e) => `${e.header.name} (${TYPE_LABEL[e.header.type] ?? e.header.type})`;
-const wikiEntries = entries.filter((e) => !["race", "watch"].includes(e.header.type));
+const wikiEntries = entries.filter((e) => !["race", "watch", "recipe"].includes(e.header.type));
 const firstSentence = (text = "") => {
   const line = text.replace(/^\s*(-|\d+\.)\s+/, "").split(/\n\s*\n|\n\s*(?:-|\d+\.)\s/)[0].replace(/\s+/g, " ").trim();
   const sentence = line.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? line;
@@ -314,8 +329,68 @@ const setup = {
   characterCards: [{ name: inquisitorName }, ...COMPANIONS.map((id) => ({ name: byId.get(id)?.header.name ?? id }))],
 };
 writeFileSync(join(distDir, "game-setup.json"), `${JSON.stringify(setup, null, 2)}\n`);
+// The Game Mode panel's campaign data (war table, crafting, companions, acts and missions), stored on
+// the game chat by install.mjs. Mechanics stay in the ledger; this only names what can be chosen.
+const nameOf = (id) => byId.get(id)?.header.name ?? id;
+const costOf = (cost) => {
+  const [resource, amount] = cost.split(" ");
+  return { resource, amount: Number(amount) };
+};
+const acts = (season?.sections.Acts ?? "")
+  .split(/\n(?=\d+\.\s)/)
+  .map((block) => block.match(/^(\d+)\.\s+\*\*(.+?)\.?\*\*\s*([\s\S]*)$/))
+  .filter(Boolean)
+  .map(([, act, name, text]) => ({ act: Number(act), name, summary: text.replace(/\s+/g, " ").trim() }));
+const ofType = (type) => entries.filter((e) => e.header.type === type).sort((a, b) => a.header.id.localeCompare(b.header.id));
+const campaign = {
+  id: "lore-fitness-season-one",
+  version: PACK_VERSION,
+  season: { name: season?.header.name ?? "", premise: (season?.sections.Premise ?? "").replace(/\s+/g, " ").trim(), acts },
+  projects: ofType("project")
+    .map((e) => ({
+      id: e.header.id,
+      name: e.header.name,
+      advisor: nameOf(e.header.advisor),
+      act: e.header.act === "any" ? null : Number(e.header.act),
+      cost: costOf(e.header.cost),
+      order: flatten(e.sections.Order),
+      report: flatten(e.sections.Report),
+      // Pack ids in the text read as the entries' names for the Game Master and the panel.
+      unlocks: flatten(e.sections.Unlocks).replace(/\b[a-z0-9]+(?:-[a-z0-9]+)+\b/g, (id) => (byId.has(id) ? byId.get(id).header.name : id)),
+    }))
+    .sort((a, b) => (a.act ?? 0) - (b.act ?? 0) || a.name.localeCompare(b.name)),
+  recipes: ofType("recipe").map((e) => ({
+    id: e.header.id,
+    name: e.header.name,
+    item: `${ITEM_CATALOG}/${e.header.item}`,
+    itemName: items.get(e.header.item).label,
+    count: Number(e.header.count),
+    cost: costOf(e.header.cost),
+    materials: materialsOf(e.header).map((m) => ({ item: `${ITEM_CATALOG}/${m.id}`, itemName: items.get(m.id).label, count: m.count })),
+    workshop: flatten(e.sections["At the workshop"]),
+  })),
+  companions: COMPANIONS.map((id) => byId.get(id)).filter(Boolean).map((e) => ({
+    id: e.header.id,
+    name: e.header.name,
+    summary: firstSentence(e.sections.Summary),
+    role: firstSentence(e.sections["With the Inquisition"]),
+    training: firstSentence(e.sections["Training role"]),
+  })),
+  missions: ofType("mission")
+    .map((e) => ({
+      id: e.header.id,
+      name: e.header.name,
+      act: e.header.act === "any" ? null : Number(e.header.act),
+      kind: e.header.kind,
+      companions: [].concat(e.header.companions ?? []).filter((c) => c !== "none"),
+      requires: [].concat(e.header.requires ?? []).filter((r) => r !== "none"),
+      premise: firstSentence(e.sections.Premise),
+    }))
+    .sort((a, b) => (a.act ?? 9) - (b.act ?? 9) || a.id.localeCompare(b.id)),
+};
+writeFileSync(join(distDir, "campaign.json"), `${JSON.stringify(campaign, null, 2)}\n`);
 writeFileSync(
   join(distDir, "manifest.json"),
-  `${JSON.stringify({ id: "lore-fitness-season-one", version: PACK_VERSION, ruleset: RULESET, counts, files: ["inquisition-season-one.lorebook.json", ...RACES.map((r) => `race-${r}.lorebook.json`), "game-setup.json"] }, null, 2)}\n`,
+  `${JSON.stringify({ id: "lore-fitness-season-one", version: PACK_VERSION, ruleset: RULESET, counts, files: ["inquisition-season-one.lorebook.json", ...RACES.map((r) => `race-${r}.lorebook.json`), "game-setup.json", "campaign.json"] }, null, 2)}\n`,
 );
 process.stdout.write(`built ${relative(process.cwd(), distDir)}\n`);

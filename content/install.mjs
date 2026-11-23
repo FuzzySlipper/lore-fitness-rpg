@@ -8,6 +8,11 @@
 //        [--race human|elf|dwarf|qunari] [--class warrior|rogue|mage] [--pronouns she/her] \
 //        [--connection ID] [--no-fitness]
 //   node content/install.mjs --base URL --chat CHAT_ID --set-race elf
+//   node content/install.mjs --base URL --chat CHAT_ID --refresh-campaign
+//
+// The campaign data the Training panel reads (war table, crafting, companions, acts and missions)
+// is stored on the game chat as metadata `fitnessCampaign`; --refresh-campaign rewrites it after a
+// pack update without touching anything the player did (that lives under metadata `fitness`).
 //
 // Re-running is safe: the ruleset, lorebooks and persona are reused when they already exist.
 
@@ -72,6 +77,13 @@ async function setRace(chatId, race, playerName) {
   });
   await api("PATCH", `/api/chats/${chatId}/metadata`, { activeLorebookIds: [...active, books[race]], gameCharacterCards: cards });
   say(`race set to ${race} for chat ${chatId}`);
+}
+
+if (args["refresh-campaign"]) {
+  if (!args.chat) throw new Error("--chat is required with --refresh-campaign");
+  await api("PATCH", `/api/chats/${args.chat}/metadata`, { fitnessCampaign: dist("campaign.json") });
+  say(`campaign data refreshed for chat ${args.chat}`);
+  process.exit(0);
 }
 
 if (args["set-race"]) {
@@ -145,7 +157,7 @@ const cards = meta.gameCharacterCards.map((card) => {
   const build = card.rulesetSheet.build;
   return { ...card, rulesetSheet: { ...card.rulesetSheet, build: { ...build, fields: { ...build.fields, class: klass, ...(args.pronouns ? { pronouns: args.pronouns } : {}) } } } };
 });
-await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards });
+await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards, fitnessCampaign: dist("campaign.json") });
 
 // 6. The fitness module, when this Marinara has it.
 if (args["no-fitness"] !== "true") {

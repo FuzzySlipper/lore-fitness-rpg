@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); crafting, the full war-table list, Companions and Campaign views next |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks; browser look pending); combat benefits of preparation next |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -306,3 +306,40 @@ changed.
 Not done: an unresolved-review case, a browser look at the panel, deployment.
 Next action: a browser look at the Agent team panel and the remaining stage 3
 views (crafting, the full war table, Companions, Campaign).
+
+### 2026-11-22 — Campaign views in the Training panel
+
+Claude Code session `s/a60d803335a9aa0a`, at Patch's choice to do the
+remaining stage 3 views before the panel's browser look.
+
+- Content: 11 workshop recipes (`content/pack/crafting/`, new `recipe` type).
+  The build writes `dist/campaign.json`, and the installer stores it on the
+  game; `--refresh-campaign` updates an existing game.
+- Marinara `fitness/module` `0a5e04786` (fetched as a branch into den-lore's
+  `Marinara-Custom`, not deployed):
+  - The panel has tabs: Today, War table, Companions, Campaign and Journal.
+  - All 14 pack projects are listed, and each opens with its act.
+  - Workshop recipes go through Game Mode's inventory.
+  - Project reports and what the workshop made reach the next turn's locked
+    facts once. The act and the missions done reach every turn.
+  - The placeholder projects are removed.
+- Defaults are recorded in
+  [stage 3](03-marinara-integration.md#campaign-views-2026-11-22).
+
+Validation (scratch Marinara and mock game master only):
+
+- `campaign-views.mjs` 16/16, `fitness-turn.mjs` 24/24 and
+  `swipe-persistence.mjs` 15/15.
+- `pnpm check` passed, and `content/build.mjs` reported 104 entries and 0 errors.
+
+Not done:
+
+- A browser look. A hosted playtest page did not list the installed game in
+  its GM tab, although the server's API did. The cause is not found, so stage 6
+  must check it.
+- Preparation resources tied to ruleset combat.
+- War-table outcomes beyond the report.
+
+Next action: confirm in a browser that an installed game opens and that the
+tabs render, then connect preparation resources to combat.
+

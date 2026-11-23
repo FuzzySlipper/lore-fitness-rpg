@@ -68,7 +68,7 @@ not an implementation of an official tabletop system.
 | What fitness buys in play | Level: Seasoned (+1 at 4, +2 at 8, +3 at 12, +4 at 16) on every ability check and attacks, +5 health per level, focus 1/2/3 at levels 1/6/12. Unspent training: Drilled +1 at 4, +2 at 8 on attacks. Unspent supplies: +4/+8/+12 health at 5/10/15. Spending at the war table therefore trades a little fight readiness for progress elsewhere |
 | Talents | 12 talents, four per class across canon trees, unlocking at levels 1, 3 and 6; descriptions are original |
 | Opponents | Shade, wraith, despair demon, rage demon, Venatori gladiator, spellbinder and magister, Red Templar, horror and behemoth, in skirmish/dangerous/boss tiers |
-| Items | A Skyhold quartermaster list of weapons, armor, potions and crafting materials; crafting recipes are not yet defined |
+| Items | A Skyhold quartermaster list of weapons, armor, potions and crafting materials. Workshop recipes (2026-11-22) are pack files in `content/pack/crafting/`, used by the stage 3 Training panel |
 | Rests | Rest at an Inquisition camp (full restore, clears conditions) and Catch your breath (stamina) |
 | Known rough edge | NPC cards get the same sheet (Level 1, Race Human by default); harmless, tidy later |
 
