@@ -108,5 +108,11 @@ entries; the Training panel's workshop offers them.
 SillyTavern world-info format (which Marinara imports), one race lorebook per
 race, the Game Mode setup JSON for `POST /api/game/setup/apply-json`, `campaign.json`
 (the war table, workshop, companions, acts and missions the Training panel
-offers; `install.mjs` stores it on the game), and a manifest with the pack
-version and the ruleset it needs.
+offers, and the talent `progression` the fitness module grants by level;
+`install.mjs` stores it on the game), and a manifest with the pack version and
+the ruleset it needs.
+
+`install.mjs` also turns on ruleset-resolved fights for the game and gives the
+Inquisitor the chosen class's attributes, trained skills, a worn starting kit
+and two healing potions (defaults in
+[stage 3](../docs/03-marinara-integration.md#fights-2026-11-23)).

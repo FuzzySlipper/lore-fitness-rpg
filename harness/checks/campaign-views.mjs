@@ -82,6 +82,8 @@ record(
   pack ? `${pack.projects.length} projects, ${pack.recipes.length} recipes, ${pack.season.acts.length} acts` : "none",
 );
 record("game starts in act 1", current.campaign?.state.act === 1);
+// Talents the journal's level unlocked at install are already waiting to be announced.
+const pendingAtStart = current.campaign.state.pending;
 
 // 1. War table.
 const project = pack.projects.find((p) => p.id === "audit-the-stores");
@@ -107,12 +109,13 @@ record(
 before = await supplies();
 await api("POST", `/api/fitness/chats/${chatId}/craft`, { id: "elfroot-from-the-garden", idempotencyKey: randomUUID() });
 record("recipe puts the item in the inventory", (await held("Elfroot")) === 2 && before - (await supplies()) === 1);
+const potionsBefore = await held("Healing potion"); // the starting kit carries some
 await api("POST", `/api/fitness/chats/${chatId}/craft`, { id: "healing-potions", idempotencyKey: randomUUID() });
-record("recipe uses materials from the pack", (await held("Elfroot")) === 1 && (await held("Healing potion")) === 2);
+record("recipe uses materials from the pack", (await held("Elfroot")) === 1 && (await held("Healing potion")) === potionsBefore + 2);
 before = await supplies();
 const noIron = await refused(api("POST", `/api/fitness/chats/${chatId}/craft`, { id: "forge-chainmail", idempotencyKey: randomUUID() }));
 record("missing materials refuse before spending", noIron === 409 && (await supplies()) === before);
-record("panel counts pending results", (await view()).campaign.state.pending === 3);
+record("panel counts pending results", (await view()).campaign.state.pending === pendingAtStart + 3);
 
 // 3. The next turn's locked facts carry the results once.
 const first = await turn({ userMessage: "I go to the war room to hear the reports." });

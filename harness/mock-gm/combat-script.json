@@ -1,0 +1,13 @@
+{
+  "$comment": "Scripted game master for fight checks: a player message containing \"I draw my sword\" starts one against a Venatori Gladiator from the ruleset's bestiary. Synthetic fixture.",
+  "rules": [
+    {
+      "match": "I draw my sword",
+      "reply": "A Venatori gladiator vaults the low wall of the lower courtyard, blade already moving. Cassandra shouts a warning as he comes for you.\n[combat: enemies=\"Venatori Gladiator\"]"
+    }
+  ],
+  "default": [
+    "The torches of Skyhold gutter as the wind shifts. What do you do?",
+    "The courtyard is quiet again. Cassandra wipes her blade and nods to you. What next?"
+  ]
+}

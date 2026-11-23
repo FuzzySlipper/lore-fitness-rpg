@@ -141,6 +141,10 @@ const created = await api("POST", "/api/game/create", {
     partyCharacterIds: [],
     personaId: persona.id,
     ruleset: { id: manifest.ruleset.id, version: manifest.ruleset.version },
+    // Fights resolved by the ruleset, so level, training, supplies, worn armor and made items
+    // count in them. Without the combat director Marinara runs its own classic battle instead.
+    combatDirector: true,
+    combatStyle: "classic",
     activeLorebookIds: [seasonBook, books[race]],
   },
 });
@@ -159,7 +163,73 @@ const cards = meta.gameCharacterCards.map((card) => {
 });
 await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards, fitnessCampaign: dist("campaign.json") });
 
-// 6. The fitness module, when this Marinara has it.
+// 6. The class: attributes, trained skills and the starting kit, worn. Talents are added by the
+//    fitness module as the level from the fitness journal reaches them (campaign.json progression).
+const CLASS_BUILDS = {
+  warrior: {
+    abilities: { strength: 3, dexterity: 1, magic: 0, cunning: 0, willpower: 1, constitution: 2 },
+    skills: { athletics: "trained", intimidation: "trained", survival: "trained" },
+    saves: { fortitude: "trained" },
+    worn: ["longsword", "shield", "chainmail"],
+  },
+  rogue: {
+    abilities: { strength: 0, dexterity: 3, magic: 0, cunning: 2, willpower: 1, constitution: 1 },
+    skills: { stealth: "trained", acrobatics: "trained", perception: "trained" },
+    saves: { reflex: "trained" },
+    worn: ["daggers", "scout-leathers"],
+    carried: ["longbow"],
+  },
+  mage: {
+    abilities: { strength: 0, dexterity: 1, magic: 3, cunning: 1, willpower: 2, constitution: 0 },
+    skills: { arcana: "trained", lore: "trained", medicine: "trained" },
+    saves: { resolve: "trained" },
+    worn: ["staff", "scout-leathers"],
+  },
+};
+const STARTING_POTIONS = 2;
+const kit = CLASS_BUILDS[klass];
+{
+  const meta = metadataOf(await api("GET", `/api/chats/${chatId}`));
+  const cards = meta.gameCharacterCards.map((card) => {
+    if (card.name !== name) return card;
+    const build = card.rulesetSheet.build;
+    return {
+      ...card,
+      rulesetSheet: {
+        ...card.rulesetSheet,
+        build: {
+          ...build,
+          abilities: { ...build.abilities, ...kit.abilities },
+          skills: { ...build.skills, ...kit.skills },
+          saves: { ...build.saves, ...kit.saves },
+        },
+      },
+    };
+  });
+  await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards });
+  const quartermaster = JSON.parse(rulesetText).catalogs.find((c) => c.id === "quartermaster");
+  const itemRef = (id) => `quartermaster/${id}`;
+  const label = (id) => quartermaster.entries.find((e) => e.id === id)?.label ?? id;
+  const items = [...kit.worn, ...(kit.carried ?? [])];
+  const added = await api("POST", "/api/game/inventory", {
+    chatId,
+    ops: [
+      ...items.map((id) => ({ op: "add", name: label(id), item: itemRef(id), count: 1 })),
+      { op: "add", name: label("healing-potion"), item: itemRef("healing-potion"), count: STARTING_POTIONS },
+    ],
+  });
+  const refused = added.results.filter((result) => !result.ok);
+  if (refused.length) say(`starting kit: ${refused.length} item(s) not added: ${JSON.stringify(refused)}`);
+  const wear = added.inventory.filter((stack) => kit.worn.some((id) => stack.item === itemRef(id)) && !stack.equipped);
+  if (wear.length) {
+    const worn = await api("POST", "/api/game/inventory", { chatId, ops: wear.map((stack) => ({ op: "equip", id: stack.id })) });
+    const notWorn = worn.results.filter((result) => !result.ok);
+    if (notWorn.length) say(`starting kit: ${notWorn.length} item(s) not worn: ${JSON.stringify(notWorn)}`);
+  }
+  say(`${klass} kit: ${items.join(", ")} (${kit.worn.join(", ")} worn), ${STARTING_POTIONS} healing potions`);
+}
+
+// 7. The fitness module, when this Marinara has it.
 if (args["no-fitness"] !== "true") {
   try {
     const view = await api("POST", `/api/fitness/chats/${chatId}/enable`, { enabled: true });

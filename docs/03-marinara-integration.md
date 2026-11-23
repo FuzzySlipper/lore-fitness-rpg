@@ -2,16 +2,17 @@
 
 Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
-Updated: 2026-11-22.
+Updated: 2026-11-23.
 
-Code: Marinara branch `fitness/module` at `0a5e04786` (campaign views; agent team
-`8b4bd6a5c`; second pass `3d4a4bdf5`; first pass `2ee03fc13`), based on
+Code: Marinara branch `fitness/module` at `a4d81c963` (talents and fights;
+panel fixes `ad286aa9e`; campaign views `0a5e04786`; agent team `8b4bd6a5c`;
+second pass `3d4a4bdf5`; first pass `2ee03fc13`), based on
 `custom/agent-turn` `3050e9a40`. It exists in the den-agents copy
 (`~/dev/lore-fitness-rpg-work/marinara-custom`) and was fetched into
 `C:\Dev\Marinara-Custom` on den-lore as a branch only; that checkout's working
 tree was not changed, and nothing is deployed to Lore's `Marinara-Engine`.
-Next useful actions: tie preparation resources to ruleset combat, war-table
-outcomes beyond the report, and deployment in stage 6.
+Next useful actions: a fight with a real model, war-table outcomes beyond the
+report, and deployment in stage 6.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: durable mechanics](02-durable-mechanics.md) ·
@@ -70,8 +71,10 @@ server extensions are not the backend integration path.
   Verified with scripted checks and a browser look at desktop and phone width
   (see [Browser look](#browser-look-2026-11-23)); not yet on Lore's devices.
   Reward receipts are covered by the scripted checks, not the browser look.
-- [ ] Connect preparation resources and training progression to actual ruleset
+- [x] Connect preparation resources and training progression to actual ruleset
   combat benefits, choices and equipment rather than only narrative claims.
+  Verified with a scripted check and a browser fight on scratch (see
+  [Fights](#fights-2026-11-23)); not yet with a real model.
 - [x] Handle regeneration, swipes, restart, continuation and backup restore
   explicitly; retain the existing behavior for unaffected chats.
 - [x] Expose useful status when the fitness service, DSH or optional narration is
@@ -345,6 +348,88 @@ Not covered: Lore's actual devices (stage 6 device quality), a real model, the
 Agent team section (needs a team engine), and the reward receipts list (no
 unapplied grants in this run; the scripted checks cover it). Server code did not
 change, so the server checks were not rerun; `pnpm check` passed.
+
+## Fights (2026-11-23)
+
+Before this, every fight in an installed game was Marinara's classic battle: the
+installer never turned on the combat director, so the Inquisitor fought at
+"Lv.1" with Engine numbers and nothing from the ledger counted. Now a fight is
+resolved by the Inquisition ruleset, and the sheet the fitness module writes is
+what it fights with.
+
+What reaches a fight, all through supported Marinara ruleset combat:
+
+| From the journal | In a fight |
+| --- | --- |
+| Level | Seasoned on every attack, save and initiative roll (the ruleset's check `adjust`, which a fight applies), +5 health per level, focus 1/2/3, and the class talents of each level reached |
+| Unspent training | Drilled: +1 to attacks at 4, +2 at 8 |
+| Unspent supplies | Provisioned: +4/+8/+12 health at 5/10/15 |
+| Workshop and war table | Made weapons, armor and potions are Game Mode inventory; worn armor adds to Defense, a worn weapon is an attack, a potion is drunk from the Items menu and used up |
+
+Spending supplies or training at the war table lowers Provisioned or Drilled in
+the next fight, so it is a choice between readiness and campaign progress.
+
+Defaults recorded (Patch prefers defaults to questions):
+
+- **Fights are ruleset fights.** The installer sets the game's `combatDirector`
+  (and the classic presentation, no board). Opponents come from the ruleset's
+  bestiary when the Game Master's `[combat: enemies="…"]` names them, and
+  Marinara's own fallback otherwise.
+- **Class builds at install** (each sums to 7): warrior STR 3, DEX 1, MAG 0,
+  CUN 0, WIL 1, CON 2, trained in Athletics, Intimidation, Survival and
+  Fortitude; rogue STR 0, DEX 3, MAG 0, CUN 2, WIL 1, CON 1, trained in Stealth,
+  Acrobatics, Perception and Reflex; mage STR 0, DEX 1, MAG 3, CUN 1, WIL 2,
+  CON 0, trained in Arcana, Lore, Field medicine and Resolve.
+- **Starting kit, worn:** warrior longsword, heater shield and chainmail; rogue
+  paired daggers and scout leathers, with a longbow carried; mage staff and
+  scout leathers. Every class starts with two healing potions.
+- **Talents come with level.** On every sync the module adds each class talent
+  whose level the journal's level has reached (campaign pack `progression`,
+  built from the ruleset's `talent_trees`) to the sheet's talent list, marked
+  `talent_trees/<id>` as the sheet's own picker marks a row, and the next turn's
+  locked facts say "New talent at level N: …" once. Granted talents are
+  recorded in the campaign state, so one the player removes is not added back.
+- **Ruleset version 2** (`local/inquisition@2`): every talent has fight
+  mechanics (attacks, saves for half, Guarded, Weakened, Knocked down, Marked,
+  Chilled, Hidden with advantage on the next attack; Rally, Flurry of a
+  Thousand Cuts and Chain Lightning spend focus). Talents roll with
+  `talent_attack` (best of STR, DEX and MAG, plus Seasoned) and are saved
+  against `talent_dc` (10 + that). The healing potion heals 2d8 + 4 for an
+  action and is used up. Seasoned is applied once, through the check `adjust`;
+  version 1 also listed it as a fight bonus, which counted it twice on
+  attacks.
+- **The battle stage shows the sheet's level** (Marinara `a4d81c963`) instead of
+  the Engine's "Lv.1".
+
+Validation on scratch Marinara with the mock game master
+(`harness/mock-gm/combat-script.json`, where "I draw my sword" starts a fight
+against a Venatori Gladiator):
+
+- [`combat-preparation.mjs`](../harness/checks/combat-preparation.mjs) 20/20 for
+  a level 6 warrior with 15 supplies and 10 training: health 70 (with
+  Provisioned 12) and Defense 16 (shield and chainmail); longsword and Mighty
+  Blow roll +4 (Strength 3 and Seasoned 1) with Drilled +2; the potion is on
+  the menu with two left and drinking one leaves one; after spending 2
+  supplies and 4 training the next fight has health 66 and Drilled +1; four
+  talents granted and announced once, and a removed one stays removed.
+- Rogue and mage installs, read through the fight API: rogue health 62,
+  Defense 14, paired daggers and four rogue talents; mage health 58, Defense
+  12, staff and four mage talents.
+- A browser fight (headless Chromium, 1280×800) through Marinara's normal flow:
+  the Game Master's reply opens the battle screen, the menu lists the
+  longsword, the four talents with their focus cost and the potion with "2
+  left", and the log shows the arithmetic ("15 + 4 + 1 (Drilled …) + 1
+  (Drilled …) = 21 against Defense 13, a hit"), the potion ("Healing potion: 1
+  of 2 left") and Mighty Blow knocking the gladiator down.
+- `campaign-views.mjs` 16/16 (its pending count and potion count now allow for
+  the talents and the starting potions), `fitness-turn.mjs --ruleset
+  local/inquisition@2` 24/24, `swipe-persistence.mjs` 15/15,
+  `fitness-recovery.mjs` 12/12, and `pnpm check`.
+
+Not covered: a real model choosing bestiary names and narrating the outcome, a
+level-up during play (the persona's level is fixed; the grant is the same code
+path at any level), the character sheet in a browser, a positioned (board)
+fight, and Lore's devices.
 
 ## Marinara update procedure
 

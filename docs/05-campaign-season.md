@@ -65,8 +65,8 @@ not an implementation of an official tabletop system.
 | Skills and saves | Ten skills (Arcana is −2 untrained) and three saves: Fortitude, Reflex, Resolve |
 | Identity fields | Class (warrior, rogue, mage), specialization (nine canon specializations, chosen later), race, pronouns, background |
 | Fitness fields | `level`, `xp`, `supplies`, `training`, `rerolls`, written by the stage 3 module |
-| What fitness buys in play | Level: Seasoned (+1 at 4, +2 at 8, +3 at 12, +4 at 16) on every ability check and attacks, +5 health per level, focus 1/2/3 at levels 1/6/12. Unspent training: Drilled +1 at 4, +2 at 8 on attacks. Unspent supplies: +4/+8/+12 health at 5/10/15. Spending at the war table therefore trades a little fight readiness for progress elsewhere |
-| Talents | 12 talents, four per class across canon trees, unlocking at levels 1, 3 and 6; descriptions are original |
+| What fitness buys in play | Level: Seasoned (+1 at 4, +2 at 8, +3 at 12, +4 at 16) on every ability check, attack, save and initiative roll (through the check `adjust` only, from version 2), +5 health per level, focus 1/2/3 at levels 1/6/12. Unspent training: Drilled +1 at 4, +2 at 8 on attacks. Unspent supplies: +4/+8/+12 health at 5/10/15. Spending at the war table therefore trades a little fight readiness for progress elsewhere |
+| Talents | 12 talents, four per class across canon trees, unlocking at levels 1, 3 and 6; descriptions are original. From version 2 each has fight mechanics, and the stage 3 module adds them to the sheet as the level is reached |
 | Opponents | Shade, wraith, despair demon, rage demon, Venatori gladiator, spellbinder and magister, Red Templar, horror and behemoth, in skirmish/dangerous/boss tiers |
 | Items | A Skyhold quartermaster list of weapons, armor, potions and crafting materials. Workshop recipes (2026-11-22) are pack files in `content/pack/crafting/`, used by the stage 3 Training panel |
 | Rests | Rest at an Inquisition camp (full restore, clears conditions) and Catch your breath (stamina) |
@@ -138,12 +138,20 @@ Use these unless Patch says otherwise; record any change here.
 | Romance | Not a default campaign track; companion relationships are friendship and loyalty |
 | Alternate history | None by default; any deliberate divergence is recorded in the content pack |
 
+Version 2 (2026-11-23) adds fight mechanics to every talent, `talent_power`,
+`talent_attack` and `talent_dc`, a Hidden condition (advantage on the next
+attack), a drinkable healing potion (2d8 + 4, used up), and removes the
+duplicate Seasoned fight bonus. Details and the class builds and starting kits
+are in [stage 3](03-marinara-integration.md#fights-2026-11-23).
+
 ## Original deliverables to retain
 
 - [ ] Importable playable character card and RPG framework.
 - [ ] Fitness-to-progression rules that match the implemented mechanics.
 - [ ] Supported dice notation, thresholds and reward behavior.
-- [ ] Combat configuration using the ruleset and actual Marinara functionality.
+- [x] Combat configuration using the ruleset and actual Marinara functionality.
+  The installer turns on ruleset fights; see
+  [stage 3 Fights](03-marinara-integration.md#fights-2026-11-23).
 - [x] Detailed lorebook entries for Sera, Cullen Rutherford, Dorian Pavus,
   the Iron Bull and Blackwall.
 - [ ] An immersive opening at Skyhold that establishes Lore's character and

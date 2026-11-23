@@ -2,9 +2,9 @@
   "$comment": "Inquisition: a Dragon Age-themed Game Mode ruleset for the Lore fitness RPG. Fan-made, original rules text; not an official system. The fields level, xp, supplies, training and rerolls are written by the fitness module from the player's real activity (see docs/03 and docs/05 in lore-fitness-rpg).",
   "schemaVersion": 1,
   "id": "inquisition",
-  "version": 1,
+  "version": 2,
   "name": "Inquisition (fitness campaign)",
-  "edition": "Season one, rules version 1",
+  "edition": "Season one, rules version 2",
   "license": {
     "spdx": "CC-BY-4.0",
     "attribution": "Original rules for the Lore fitness RPG. Dragon Age names belong to their owners; this is unofficial fan work."
@@ -513,6 +513,51 @@
           ]
         ],
         "section": "inquisitor"
+      },
+      {
+        "id": "talent_power",
+        "label": "Talent power (best of Strength, Dexterity and Magic)",
+        "op": "max",
+        "of": [
+          {
+            "abilityMod": "strength"
+          },
+          {
+            "abilityMod": "dexterity"
+          },
+          {
+            "abilityMod": "magic"
+          }
+        ],
+        "section": "talents"
+      },
+      {
+        "id": "talent_attack",
+        "label": "Talent attack bonus (talent power and Seasoned)",
+        "op": "sum",
+        "of": [
+          {
+            "derived": "talent_power"
+          },
+          {
+            "derived": "seasoned"
+          }
+        ],
+        "section": "talents"
+      },
+      {
+        "id": "talent_dc",
+        "label": "Talent save difficulty",
+        "op": "sum",
+        "of": [
+          {
+            "const": 10
+          },
+          {
+            "derived": "talent_attack"
+          }
+        ],
+        "section": "talents"
       }
     ],
     "lists": [
@@ -850,11 +895,24 @@
               "values": {
                 "name": "Shield Wall",
                 "tree": "Weapon and Shield",
-                "notes": "Gain Guarded until your next turn: attacks against you are at disadvantage.",
+                "notes": "Gain Guarded (+2 Defense) until your next turn.",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "buff",
+            "targets": "self",
+            "applies": [
+              {
+                "condition": "guarded",
+                "duration": {
+                  "rounds": 1,
+                  "at": "turn-start"
+                }
+              }
+            ]
+          }
         },
         {
           "id": "war-cry",
@@ -872,11 +930,28 @@
               "values": {
                 "name": "War Cry",
                 "tree": "Battlemaster",
-                "notes": "Nearby enemies are Weakened and turn their attention to you for a round.",
+                "notes": "Up to three enemies make a Resolve save or are Weakened (-2 on attacks) for a round.",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "debuff",
+            "targets": "enemy",
+            "targetCount": 3,
+            "save": {
+              "save": "resolve",
+              "onSuccess": "negates"
+            },
+            "applies": [
+              {
+                "condition": "weakened",
+                "duration": {
+                  "rounds": 1
+                }
+              }
+            ]
+          }
         },
         {
           "id": "mighty-blow",
@@ -894,12 +969,27 @@
               "values": {
                 "name": "Mighty Blow",
                 "tree": "Two-Handed",
-                "notes": "A heavy strike that knocks a staggered foe down.",
+                "notes": "A heavy strike that knocks the foe down (-2 Defense) for a round.",
                 "damage": "2d8",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "attackRoll": true,
+            "amount": {
+              "dice": "2d8"
+            },
+            "applies": [
+              {
+                "condition": "knocked_down",
+                "duration": {
+                  "rounds": 1
+                }
+              }
+            ]
+          }
         },
         {
           "id": "rally",
@@ -917,11 +1007,31 @@
               "values": {
                 "name": "Rally",
                 "tree": "Battlemaster",
-                "notes": "Spend focus: every ally gains Guarded and recovers 2 stamina.",
+                "notes": "Spend focus: up to four allies gain Guarded (+2 Defense) until your next turn.",
                 "uses_focus": true
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "buff",
+            "targets": "ally",
+            "targetCount": 4,
+            "cost": [
+              {
+                "pool": "focus",
+                "amount": 1
+              }
+            ],
+            "applies": [
+              {
+                "condition": "guarded",
+                "duration": {
+                  "rounds": 1,
+                  "at": "turn-start"
+                }
+              }
+            ]
+          }
         },
         {
           "id": "long-shot",
@@ -939,12 +1049,21 @@
               "values": {
                 "name": "Long Shot",
                 "tree": "Archery",
-                "notes": "A careful bow shot that deals more the farther the target is.",
+                "notes": "A careful bow shot at a foe up to 30 paces away.",
                 "damage": "1d10",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "attackRoll": true,
+            "range": 30,
+            "amount": {
+              "dice": "1d10",
+              "flat": 2
+            }
+          }
         },
         {
           "id": "stealth-step",
@@ -962,11 +1081,24 @@
               "values": {
                 "name": "Into the Shadows",
                 "tree": "Subterfuge",
-                "notes": "Become Hidden; your next attack from hiding has advantage.",
+                "notes": "Become Hidden; your next attack before the end of your next turn has advantage.",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "buff",
+            "targets": "self",
+            "applies": [
+              {
+                "condition": "hidden",
+                "duration": {
+                  "rounds": 1
+                },
+                "endsAfter": "own-attack"
+              }
+            ]
+          }
         },
         {
           "id": "twin-fangs",
@@ -984,12 +1116,27 @@
               "values": {
                 "name": "Twin Fangs",
                 "tree": "Double Daggers",
-                "notes": "A paired strike that hits harder against a foe that is Marked or knocked down.",
+                "notes": "A paired strike that leaves the foe Marked (-2 Defense) for a round.",
                 "damage": "2d6",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "attackRoll": true,
+            "amount": {
+              "dice": "2d6"
+            },
+            "applies": [
+              {
+                "condition": "marked",
+                "duration": {
+                  "rounds": 1
+                }
+              }
+            ]
+          }
         },
         {
           "id": "thousand-cuts",
@@ -1007,12 +1154,26 @@
               "values": {
                 "name": "Flurry of a Thousand Cuts",
                 "tree": "Double Daggers",
-                "notes": "Spend focus: strike every enemy within reach.",
+                "notes": "Spend focus: strike up to four enemies, each rolled separately.",
                 "damage": "3d6",
                 "uses_focus": true
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "attackRoll": true,
+            "targetCount": 4,
+            "cost": [
+              {
+                "pool": "focus",
+                "amount": 1
+              }
+            ],
+            "amount": {
+              "dice": "3d6"
+            }
+          }
         },
         {
           "id": "barrier",
@@ -1030,11 +1191,25 @@
               "values": {
                 "name": "Barrier",
                 "tree": "Spirit",
-                "notes": "You and nearby allies gain Guarded until your next turn.",
+                "notes": "You and up to three allies gain Guarded (+2 Defense) until your next turn.",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "buff",
+            "targets": "ally",
+            "targetCount": 4,
+            "applies": [
+              {
+                "condition": "guarded",
+                "duration": {
+                  "rounds": 1,
+                  "at": "turn-start"
+                }
+              }
+            ]
+          }
         },
         {
           "id": "fire-mine",
@@ -1052,12 +1227,24 @@
               "values": {
                 "name": "Fire Mine",
                 "tree": "Inferno",
-                "notes": "A glyph that bursts when an enemy crosses it, leaving them Burning.",
+                "notes": "A glyph bursts under up to two enemies: fire, a Reflex save for half.",
                 "damage": "2d6",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "targetCount": 2,
+            "save": {
+              "save": "reflex",
+              "onSuccess": "half"
+            },
+            "amount": {
+              "dice": "2d6"
+            },
+            "damageType": "fire"
+          }
         },
         {
           "id": "winters-grasp",
@@ -1075,12 +1262,28 @@
               "values": {
                 "name": "Winter's Grasp",
                 "tree": "Winter",
-                "notes": "Freeze one foe: they are Chilled and cannot move on their next turn.",
+                "notes": "Frost on one foe: cold damage, and they are Chilled (half speed) for a round.",
                 "damage": "1d8",
                 "uses_focus": false
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "attackRoll": true,
+            "amount": {
+              "dice": "1d8"
+            },
+            "damageType": "cold",
+            "applies": [
+              {
+                "condition": "chilled",
+                "duration": {
+                  "rounds": 1
+                }
+              }
+            ]
+          }
         },
         {
           "id": "chain-lightning",
@@ -1098,12 +1301,30 @@
               "values": {
                 "name": "Chain Lightning",
                 "tree": "Storm",
-                "notes": "Spend focus: lightning arcs through up to four enemies.",
+                "notes": "Spend focus: lightning arcs through up to four enemies, a Reflex save for half.",
                 "damage": "3d6",
                 "uses_focus": true
               }
             }
-          ]
+          ],
+          "mechanics": {
+            "kind": "attack",
+            "targetCount": 4,
+            "cost": [
+              {
+                "pool": "focus",
+                "amount": 1
+              }
+            ],
+            "save": {
+              "save": "reflex",
+              "onSuccess": "half"
+            },
+            "amount": {
+              "dice": "3d6"
+            },
+            "damageType": "lightning"
+          }
         }
       ]
     },
@@ -1856,6 +2077,17 @@
             "cost": {
               "amount": 2,
               "unit": "silver"
+            },
+            "use": {
+              "kind": "heal",
+              "budget": "act",
+              "range": 0,
+              "targets": "ally",
+              "amount": {
+                "dice": "2d8",
+                "flat": 4
+              },
+              "consumes": true
             }
           }
         },
@@ -1889,7 +2121,7 @@
     }
   ],
   "combat": {
-    "$comment": "Fights are resolved by these rules. Preparation from real training appears here: level adds to attacks through Seasoned, unspent training through Drilled.",
+    "$comment": "Fights are resolved by these rules. Preparation from real training appears here: level reaches every roll through Seasoned (resolution.adjust, which a fight adds to attacks, saves and initiative), unspent training adds to attacks through Drilled, unspent supplies add health through Provisioned (sheet), and talents unlocked by level are the abilities on the menu.",
     "kind": "attack-vs-defense",
     "health": {
       "pool": "health"
@@ -1932,7 +2164,13 @@
     "abilities": [
       {
         "list": "talents",
-        "budget": "act"
+        "budget": "act",
+        "toHit": {
+          "derived": "talent_attack"
+        },
+        "saveDifficulty": {
+          "derived": "talent_dc"
+        }
       }
     ],
     "standard": [
@@ -1993,39 +2231,15 @@
             "flat": 2
           }
         ]
+      },
+      {
+        "condition": "hidden",
+        "effects": [
+          "own-attacks-advantage"
+        ]
       }
     ],
     "levels": [
-      {
-        "derived": "seasoned",
-        "at": 1,
-        "modifiers": [
-          {
-            "to": "attacks",
-            "flat": 1
-          }
-        ]
-      },
-      {
-        "derived": "seasoned",
-        "at": 2,
-        "modifiers": [
-          {
-            "to": "attacks",
-            "flat": 1
-          }
-        ]
-      },
-      {
-        "derived": "seasoned",
-        "at": 3,
-        "modifiers": [
-          {
-            "to": "attacks",
-            "flat": 1
-          }
-        ]
-      },
       {
         "derived": "drilled",
         "at": 1,

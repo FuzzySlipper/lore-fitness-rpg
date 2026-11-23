@@ -22,7 +22,7 @@ const checkOnly = args.includes("--check");
 const inquisitorName = args.includes("--inquisitor") ? args[args.indexOf("--inquisitor") + 1] : "The Inquisitor";
 
 const PACK_VERSION = 1;
-const RULESET = { id: "local/inquisition", version: 1 };
+const RULESET = { id: "local/inquisition", version: 2 };
 const RACES = ["human", "elf", "dwarf", "qunari"];
 const COMPANIONS = ["solas", "cassandra", "leliana", "cullen", "dorian", "sera", "iron-bull", "blackwall"];
 
@@ -342,9 +342,28 @@ const acts = (season?.sections.Acts ?? "")
   .filter(Boolean)
   .map(([, act, name, text]) => ({ act: Number(act), name, summary: text.replace(/\s+/g, " ").trim() }));
 const ofType = (type) => entries.filter((e) => e.header.type === type).sort((a, b) => a.header.id.localeCompare(b.header.id));
+// Talents the level from the fitness journal unlocks. The Marinara fitness module adds each one to
+// the player's sheet as its level is reached, marked as picked from this catalog, so a ruleset fight
+// reads what it does from the catalog entry's mechanics.
+const TALENT_CATALOG = "talent_trees";
+const talentCatalog = ruleset.catalogs.find((c) => c.id === TALENT_CATALOG);
+const progression = {
+  catalog: TALENT_CATALOG,
+  classField: "class",
+  talents: talentCatalog.entries.map((e) => ({
+    id: e.id,
+    name: e.label,
+    classes: e.filters.class,
+    level: e.filters.level,
+    list: e.rows[0].list,
+    values: e.rows[0].values,
+  })),
+};
+
 const campaign = {
   id: "lore-fitness-season-one",
   version: PACK_VERSION,
+  progression,
   season: { name: season?.header.name ?? "", premise: (season?.sections.Premise ?? "").replace(/\s+/g, " ").trim(), acts },
   projects: ofType("project")
     .map((e) => ({

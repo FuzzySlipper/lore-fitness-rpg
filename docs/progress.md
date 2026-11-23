@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look at desktop and phone width); combat benefits of preparation next |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look); fights resolved by the ruleset with level, training, supplies, kit and talents counting (scripted check and browser fight); a real-model fight next |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -387,3 +387,37 @@ Not done: Lore's devices, the Agent team section in a browser, an
 unresolved-review case, preparation resources in combat, deployment.
 
 Next action: connect preparation resources and training to ruleset combat.
+
+### 2026-11-23 — Preparation in fights (Claude Code `s/a60d803335a9aa0a`)
+
+Scope: make level, training, supplies and equipment count in actual fights.
+
+Found: installed games fought Marinara's classic battle (the installer never
+set `combatDirector`), the Inquisitor started with no attributes, kit or
+talents, talents had no fight mechanics, the healing potion could not be
+drunk, and Seasoned would have counted twice on attacks.
+
+Changed:
+
+- Lore repo: `content/install.mjs` turns on ruleset fights and gives each class
+  its attributes, trained skills, a worn kit and two potions; ruleset version 2
+  (talent mechanics, `talent_attack`/`talent_dc`, Hidden, drinkable potion,
+  Seasoned once); `campaign.json` `progression`; `harness/checks/combat-preparation.mjs`
+  and `harness/mock-gm/combat-script.json`; the pending and potion counts in
+  `campaign-views.mjs` allow for talents and the starting kit.
+- Marinara `a4d81c963`: the sync grants class talents by level, once, with a
+  locked-facts line; the battle stage shows the sheet's level. Fetched into
+  den-lore's `C:\Dev\Marinara-Custom` as a branch only; nothing deployed.
+
+Defaults are in [stage 3](03-marinara-integration.md#fights-2026-11-23).
+
+Validation (scratch Marinara, mock game master): combat-preparation 20/20,
+campaign-views 16/16, fitness-turn `--ruleset local/inquisition@2` 24/24,
+swipe-persistence 15/15, fitness-recovery 12/12, `pnpm check`, rogue and mage
+fight menus through the API, and a browser fight with the warrior.
+
+Not done: a real-model fight, a level-up during play, the sheet in a browser, a
+board fight, Lore's devices, war-table outcomes beyond the report, deployment.
+
+Next action: a real-model fight on den-m5 with the installed game, checking the
+Game Master names bestiary opponents and narrates the committed outcome.
