@@ -2,7 +2,7 @@
 
 Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
-Updated: 2026-11-18.
+Updated: 2026-11-22.
 
 Code: Marinara branch `fitness/module` at `3d4a4bdf5` (first pass `2ee03fc13`), based on
 `custom/agent-turn` `3050e9a40`. It exists in the den-agents copy
@@ -83,7 +83,8 @@ server extensions are not the backend integration path.
   reviewer checks prose against committed results and companion knowledge limits.
   Plumbing done and verified with a scripted provider (see
   [DSH team in Game Mode](#dsh-team-in-game-mode-2026-11-19)); a real-model run
-  and an unresolved-review case remain.
+  passed on 2026-11-22. An unresolved-review case and a browser look at the
+  panel remain.
 
 ## Recorded defaults (2026-11-18)
 
@@ -196,7 +197,8 @@ Recorded defaults:
 | Engine folder | `MARINARA_TEAM_DSH_DIR`, else `C:\dev\Marinara-DSH` on Windows (unchanged) |
 | Review | On, two revisions (the existing team defaults); `teamTurnReview: false` turns it off |
 | Models | Every role uses the game's own connection and settings, as for roleplay |
-| Turn notes size | Sent whole (about 18k characters on a pinned ruleset game: sheet blocks and format); trimming waits for a real-model measurement |
+| Turn notes size | Sent whole (about 18.7k characters on a pinned ruleset game: sheet blocks and format). Kept whole after the 2026-11-22 real-model run: from the second turn about two-thirds of the reviewer's input and over 90% of the lore agent's came from the prompt cache, and about 45% of the narrator's |
+| Opening turn | Written by the normal single call, not the team: the startup trigger has no player line for the lore agent to work from. The team takes over from the first player turn |
 | Test instance | `harness/scripts/serve-dsh-stage.sh`: npm `@deepseek-ai/dsh@0.2.2-alpha.2` (the release on den-lore) with the plugin built from source, port 3181 |
 
 Deploying the plugin change to den-lore is stage 6 work: copy the built
@@ -213,9 +215,37 @@ regenerate handed the team identical locked facts; the panel showed the turn.
 5/5 with the engine stopped: the turn was saved by the normal call, the team
 log recorded the failure, and the panel said so. The dsh-stage
 `connection-test.mjs` passes on alpha.2 with the change (roleplay unchanged).
-`pnpm build` and the server type check pass. Not yet done: a real-model team
-turn (the Strix Halo servers are busy), an unresolved-review case, and a
-browser look at the panel.
+`pnpm build` and the server type check pass.
+
+Real-model run (2026-11-22): a scratch Marinara whose game connection was
+Gemma 4 26B A4B MTP on den-m5 (reasoning off), the same local alpha.2 DSH
+instance, a fresh season-one game (human warrior, persona `steady`), one
+mobility check-in, then an opening, two player turns and a regenerate.
+These results come from scratch runs, not a browser or device test.
+
+- Every player turn was written by the team (`team_lore`, `team_writing`,
+  `team_review` phases) and passed review on the first round. It took 40 s on
+  the first turn, then 27 s, then 24 s for the regenerate. The opening took 13 s
+  through the normal call.
+- Game Mode's markup survived: `[bg]`, `[ambient]`, the
+  `[Name] [main] [expression]` lines and `[choices]` were all parsed as usual.
+- The locked fitness facts (the mobility check-in's XP, the training and the
+  bonus roll) were in the narrator's turn notes. The prose did not mention
+  them. That fits the "mention lightly" brief, but it means the team adds
+  nothing visible for the check-in on that turn.
+- Prompt caching: on turn 2 the reviewer had 11.4k of its 17.5k input tokens
+  cached, the narrator 4.9k of 11k, and the lore agent 11k of 12k.
+- The lore agent suggested the right pages (Cullen, Drill the Garrison) on the
+  first two turns. On the regenerate it produced no suggestions, so the turn
+  used the keyword fallback (`fallbackLore: true`). The turn was still fine.
+- The reviewer answered "none" every time, so a turn with notes still
+  unresolved after the revisions has not been seen with a real model.
+- Turn 1 put one of Cullen's thoughts in quotes and in the third person ("She's
+  looking for the cracks…"). That is a narrator style slip that the reviewer
+  did not catch.
+
+Not yet done: an unresolved-review case, a browser look at the panel, and
+deployment to den-lore.
 
 ## Marinara update procedure
 

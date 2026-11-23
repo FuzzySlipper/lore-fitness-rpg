@@ -1,6 +1,6 @@
 # Progress and decisions
 
-Updated: 2026-11-19.
+Updated: 2026-11-22.
 
 ## Current state
 
@@ -13,7 +13,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | --- | --- | --- | --- |
 | [1 — Platform contract](01-platform-contract.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Swipe, inventory and dice checks done; device capture waits on Lore's razr and Watch 3 being connected |
 | [2 — Durable mechanics](02-durable-mechanics.md) | Service implemented | Claude Code `s/a60d803335a9aa0a` | Stage 3 consumes the projection, bonus-roll and spend API; stage 6 installs it on den-lore |
-| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns with a scripted provider (real-model run pending); crafting, the full war-table list, Companions and Campaign views next |
+| [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); crafting, the full war-table list, Companions and Campaign views next |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
 | [6 — Stabilization and release](06-stabilization-and-release.md) | Harness in progress | Harness: Claude Code `s/a60d803335a9aa0a` | Sessions now include a seeded scratch ledger; next, scripted persona play through the Marinara UI once stage 3 projects ledger state into games |
@@ -280,3 +280,29 @@ fitness-turn 24/24 and swipe-persistence 15/15 unchanged; `pnpm check` passed;
 unresolved-review case, a browser look at the panel, deployment. Next action:
 a real-model team turn on a Lemonade server once it's free, then visibility
 markers for secrets.
+
+### 2026-11-22 — Real-model DSH team turn
+
+Claude Code session `s/a60d803335a9aa0a`. Patch freed den-m5, and I switched it
+from Inkling 2 Mini to `Gemma-4-26B-A4B-it-MTP-GGUF`. Gemma is still loaded.
+
+Ran one real-model session: a scratch Marinara on den-m5 with the local alpha.2
+DSH instance and a fresh season-one game. It played the opening, two player
+turns and a regenerate.
+
+- All three player turns were written by the team and passed review: 40 s,
+  27 s and 24 s. Game Mode markup was intact.
+- Locked fitness facts reached the narrator. From turn 2 on, the prompt cache
+  covered most of the lore agent's and reviewer's input and about 45% of the
+  narrator's.
+- On the regenerate, the lore agent made no suggestions and the turn used the
+  keyword fallback.
+- The reviewer flagged nothing. It also missed a thought written in quotes.
+
+Details are in [stage 3](03-marinara-integration.md#dsh-team-in-game-mode-2026-11-19).
+These results come from scratch runs, not a browser or device test. No code
+changed.
+
+Not done: an unresolved-review case, a browser look at the panel, deployment.
+Next action: a browser look at the Agent team panel and the remaining stage 3
+views (crafting, the full war table, Companions, Campaign).
