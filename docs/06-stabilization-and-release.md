@@ -1,6 +1,6 @@
 # Stage 6 — Stabilization, deployment and first playtest release
 
-Status: In progress. The fitness ledger runs on den-lore and a staged Marinara build with the fitness module passes its smoke test there; Lore's running Marinara is not switched yet. Owner: Claude Code session `s/a60d803335a9aa0a` (harness since 2026-11-16, deployment since 2026-11-23). Updated: 2026-11-23.
+Status: In progress. The fitness ledger runs on den-lore, and since 2026-11-23 Lore's running Marinara has the fitness module and the season-one game installed, at Patch's request, for his desktop testing while Lore is not using it. Owner: Claude Code session `s/a60d803335a9aa0a` (harness since 2026-11-16, deployment since 2026-11-23). Updated: 2026-11-23.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: ruleset and campaign](05-campaign-season.md)
@@ -61,9 +61,8 @@ stage 5 lorebooks to correct.
 
 - [x] Document the actual service install, build, start, stop and update commands.
   See the [den-lore runbook](#den-lore-runbook).
-- [ ] Deploy the fitness service on den-lore alongside custom Marinara and DSH.
-  The ledger runs (2026-11-23); Marinara with the fitness module is staged and
-  smoke-tested, not yet Lore's running copy.
+- [x] Deploy the fitness service on den-lore alongside custom Marinara and DSH.
+  The ledger runs, and Lore's Marinara runs the fitness module (2026-11-23).
 - [x] Use the selected separate data directory, with backups outside the source
   checkout and a documented restoration procedure.
 - [ ] Configure the agreed Windows startup mechanism and recovery after restarts,
@@ -171,6 +170,56 @@ Marinara-Engine committed or set aside by its owner. At release:
    the default `http://127.0.0.1:7900`; nothing to set in `.env`.
 4. Run `content/install.mjs --base http://127.0.0.1:7860 --name "…"` with Lore's
    chosen name, race and class, then reload her open Marinara tabs.
+
+### Marinara switched (2026-11-23)
+
+At Patch's request ("deploy now to her desktop making it the running marinara
+since she's not using it atm"), so he can test the desktop experience. This
+overrides the recorded default above for the desktop only.
+
+- **The group-turns work kept.** Marinara-Engine's 15 uncommitted tracked files
+  were identical to those in `C:\Dev\Marinara-GroupTurns` (a Codex session,
+  2026-11-22) and were in her running build. They are committed unchanged as
+  `c37cd21a8` on branch `codex/group-turns-wip-20261122` (author "Claude Code
+  agent", made with a temporary index, so neither worktree changed), and
+  merged with `fitness/module` into `deploy/lore-desktop` (`5a72dc88e`). On
+  den-agents that branch passed `pnpm check`, the group-turns and prompt
+  regressions, combat-preparation 26/26, campaign-views 16/16, fitness-turn
+  24/24 and swipe-persistence 15/15. The untracked files in Marinara-Engine
+  (an audio sample, `update.bat`, `scripts/update-local.ps1`, `mari-fix-tts.js`
+  and three `dist.codex-before-group-turns-20261122` folders) are untouched.
+- **The switch.** [`deploy/windows/switch-marinara.ps1`](../deploy/windows/switch-marinara.ps1)
+  stops Marinara, copies `C:\Dev\Marinara-Data` (without its own `backups`,
+  `models` and `sidecar-runtime`) and `.env` to
+  `C:\Dev\Lore-Fitness-RPG-Data\pre-deploy\<time>`, fast-forwards
+  `local/cartesia-2.4.6` to the branch, installs and builds with the `.nvmrc`
+  Node and the pinned pnpm through npx (Node 25 has no Corepack), and starts it
+  through a one-off interactive scheduled task with the desktop shortcut's own
+  command, so it runs in Lore's session. Marinara-Engine is now at `5a72dc88e`.
+- **What went wrong on the way**, all fixed in the script: robocopy counted 25
+  folders whose attributes it could not copy as a failure (now only failed
+  files stop it); PowerShell could not run fnm through its WinGet link, and the
+  build step reported success anyway (now it uses the Node install directly and
+  checks each exit code); and Marinara-Engine's pnpm virtual store (`.pnpm`)
+  was already broken (junctions to package folders that no longer existed), so
+  install failed. The store and `node_modules` folders were removed with
+  `rmdir /s /q`, which does not follow the workspace junctions into the source,
+  and reinstalled. Marinara was down for about 15 minutes in all.
+- **The game.** `content/install.mjs` on den-lore installed ruleset
+  `local/inquisition@2` (the installer turns on Marinara's import policy for
+  that), the lorebooks, persona "Evelyn Trevelyan" (she/her, human warrior; a
+  default, since Lore has not chosen) and game "Inquisition: Evelyn Trevelyan"
+  with the fitness module on the real ledger, level 1. It uses Lore's default
+  connection, "dragonden glm 5.3". It has not been started: the opening is
+  generated when Patch presses Start Game.
+- Seen in a browser through an SSH tunnel to her loopback port (her Marinara
+  asks LAN clients for a login, and her credentials were not used): the game in
+  the GM list, the premise and Start Game screen with her connection.
+
+Patch's own check-ins, war-table orders and crafting while testing are recorded
+in the real ledger. Before Lore's release, remove test activity with
+`POST /v1/activities/:id/delete` or start from a fresh ledger (stop, move
+`ledger.sqlite` aside, start).
 
 ## Integrated acceptance scenarios
 

@@ -16,7 +16,7 @@ from the recorded defaults; see [Stages and dependencies](implementation.md#stag
 | [3 — Marinara integration](03-marinara-integration.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Game Mode path complete on scratch; DSH agent team works on game turns (scripted provider and a real-model run on den-m5); Training panel tabs with the full war table, workshop, Companions and Campaign views (scripted checks and a browser look); fights resolved by the ruleset with level, training, supplies, kit, talents and companions counting (scripted check, browser fight and real-model fights on den-m5) |
 | [4 — Phone and watch](04-phone-and-watch.md) | Planned | Unassigned | Build phone/watch modules against Health Connect and the stage 2 API, including the watch gadget features |
 | [5 — Ruleset and campaign](05-campaign-season.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Ruleset v1 and a 93-entry first-draft pack built, installed and play-tested on scratch; next, internal playthroughs to tune, the content matrix and the character card |
-| [6 — Stabilization and release](06-stabilization-and-release.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Fitness ledger running on den-lore (boot task, crash restart, daily backup into Documents); Marinara with the fitness module staged and smoke-tested there; Lore's Marinara switches at release; next, scripted persona play and the stage 4 devices |
+| [6 — Stabilization and release](06-stabilization-and-release.md) | In progress | Claude Code `s/a60d803335a9aa0a` | Fitness ledger running on den-lore; Lore's Marinara runs the fitness module with the season-one game installed for Patch's desktop testing (2026-11-23); next, the stage 4 phone and watch, now connected to den-lore |
 
 ## Confirmed decisions
 
@@ -487,3 +487,24 @@ release switch.
 
 Next action: scripted persona play on scratch, and stage 4 (phone and watch),
 which the release waits on.
+
+### 2026-11-23 — Lore's Marinara switched (Claude Code `s/a60d803335a9aa0a`)
+
+At Patch's request, for his desktop testing while Lore is not using it. Lore's
+Marinara (`C:\Dev\Marinara-Engine`) now runs `deploy/lore-desktop`
+(`5a72dc88e`): `fitness/module` plus the group-turns work that was uncommitted
+in her checkout, committed unchanged as `c37cd21a8`. Data and `.env` copied to
+`C:\Dev\Lore-Fitness-RPG-Data\pre-deploy\` first. Game "Inquisition: Evelyn
+Trevelyan" installed on the real ledger, not started. `C:\Dev\Marinara-Data`
+(about 2 GB, without its own backups, models and sidecar runtime) added to the
+Den Windows Backup path list; the old list is kept as `paths.txt.before-marinara-data`.
+Details in the [runbook](06-stabilization-and-release.md#marinara-switched-2026-11-23).
+
+Validation: deploy branch checks on den-agents (listed in the runbook); on
+den-lore, Marinara answering on 7860 at `5a72dc88e` with the fitness routes
+live and the Training panel in the client build; the game in the GM list and
+its Start Game screen in a browser. Not done: a turn in her Marinara (Patch
+starts it), the reboot test, the restic dry run's result.
+
+Patch reports the razr and Watch 3 are connected to den-lore with USB debugging
+likely on, so stage 4 can start on the devices.
