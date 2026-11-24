@@ -28,7 +28,8 @@ and updates. The existing Marinara Termux/WebView APK is not this companion.
 - [ ] Today dashboard, current mission, daily check-ins, rewards, journal and
   recent history.
 - [x] Fast workout, walk, mobility, meal, water and recovery entry.
-- [ ] Corrections, undo, backdating, goal preferences and quiet hours.
+- [ ] Corrections, undo, backdating, goal preferences and quiet hours. All but goal
+  preferences done (2026-11-24); goals stay ledger settings for now.
 - [ ] Health Connect import using supported records, source identity and versions.
 - [ ] Cumulative-data aggregation and cross-source reconciliation.
 - [x] Foreground sync and supported/permitted scheduled background reads.
@@ -188,6 +189,32 @@ emulator for the watch):
 Installed on Lore's devices over wireless debugging; the Skyhold tile was added
 on the watch with the debug-surface command. Not yet seen on the devices: the
 tile, a drill, a raven mirrored to the watch, the complication on a watch face.
+
+### Corrections and backdating (2026-11-24)
+
+- **Log for another day** (Today screen): a category, a day in the last week and
+  optional minutes, sent as a day-level entry (`start` is the date, note "logged
+  later"). The ledger counts it for that day if the category was not already
+  earned there.
+- **History** tab: the last seven days of activities from `GET /v1/activities`,
+  newest first, with where each came from, its amounts and whether it counts.
+  The apps' own entries (`lfr-phone`, `lfr-watch`) are corrected by resending the
+  same record with the next revision: moved to another day, given other minutes,
+  removed (`deleted: true`) or restored; these are queued like any check-in, so
+  they work offline. The ledger's `PATCH` only edits its own `manual` source, so
+  it is not used. Imported records (OHealth and other Health Connect sources) are
+  removed and restored with `POST /v1/activities/:id/delete|restore`, which needs
+  the connection; a removal survives re-import.
+- The snackbar's Undo now times out (long duration) and minute fields use the
+  number keypad.
+
+Verified on the phone emulator against the scratch ledger: Strength logged for
+Sunday with 20 minutes ("strength 20 min (lfr-phone) for 2026-11-22", check-in
++20 XP); moved to Saturday in History (the activity "updated at source",
+Sunday's check-in withdrawn −20 XP, Saturday's granted +20 XP); an imported
+250 ml hydration record removed (that day fell to 1750 of 2000 ml and its
+hydration check-in was withdrawn) and restored (back to 2000 ml and the check-in
+granted again). Installed on Lore's razr.
 
 ## Source selection and synchronization
 
