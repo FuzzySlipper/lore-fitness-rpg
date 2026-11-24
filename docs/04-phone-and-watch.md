@@ -216,6 +216,36 @@ Sunday's check-in withdrawn −20 XP, Saturday's granted +20 XP); an imported
 hydration check-in was withdrawn) and restored (back to 2000 ml and the check-in
 granted again). Installed on Lore's razr.
 
+### Release signing (2026-11-24)
+
+One release key signs both apps (the Data Layer needs the same signature on
+phone and watch, and Android only installs an update signed with the key the app
+was installed with):
+
+| Item | Value |
+| --- | --- |
+| Key | PKCS12 keystore `lore-fitness-release.jks`, alias `lore-fitness`, RSA 4096, valid 30 years, `CN=Lore Fitness RPG, O=Household`; certificate SHA-256 `95:92:AD:F9:79:8F:33:05:54:28:C3:7B:58:AA:A9:75:7B:64:B9:58:34:9B:52:E3:00:F0:C1:64:FA:0B:6D:BD` |
+| Where | Building copy on den-agents in `~/.config/lore-fitness-rpg/signing/` (mode 600, with `signing.properties` holding the paths and password); den-lore copies in `C:\Dev\Lore-Fitness-RPG-Data\signing\` and `Documents\Lore Fitness RPG\signing\` (with a README), the latter carried off the machine by Den Windows Backup. Never in the repository |
+| Gradle | `phone` and `wear` read `signing.properties` from that default path, or `-Plfr.signingProperties=…`; without it a release build is unsigned and Gradle warns |
+| Versions | `lfr.versionCode`/`lfr.versionName` in `android/gradle.properties`, shared by both apps; raise the code for every build that is installed. Now 2 / 0.2.0 |
+
+Build and install (den-agents, devices reached by wireless debugging):
+
+```bash
+cd android && JAVA_HOME=~/.local/opt/jdk17 ANDROID_HOME=~/.local/opt/android-sdk ./gradlew :phone:assembleRelease :wear:assembleRelease
+~/.local/opt/android-sdk/build-tools/35.0.0/apksigner verify --print-certs phone/build/outputs/apk/release/phone-release.apk
+adb -s PHONE install -r phone/build/outputs/apk/release/phone-release.apk
+adb -s WATCH install -r wear/build/outputs/apk/release/wear-release.apk
+```
+
+The switch from the debug builds needed one uninstall of each app (a different
+signature), done after checking that neither the phone's queue nor the watch's
+pending list held anything and the ledger had no activity. Health Connect,
+notification and the phone's Health Connect read permissions were restored with
+`pm grant`, as Patch had granted them; the Skyhold tile was added again. Both
+devices run 0.2.0; the watch's sync request reached the phone afterwards. From now
+on updates install in place and keep the queue, pending check-ins and grants.
+
 ## Source selection and synchronization
 
 OHealth stays the main source for ordinary workouts; import them from Health
@@ -243,7 +273,8 @@ reachable desktop or a new cloud service.
 
 - Buildable phone/watch modules with documented engineering-install commands.
 - One local signing key for both modules, kept outside the repository on
-  den-lore, and versioning that permits in-place sideloaded updates.
+  den-lore, and versioning that permits in-place sideloaded updates. Done
+  2026-11-24 (see Release signing).
 - Synthetic integration fixtures shared with the service contract.
 - Device observations for ordinary use, folded/unfolded phone use, watch
   interaction, delivery latency and release-build battery cost.

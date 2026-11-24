@@ -286,8 +286,9 @@ chosen targets. Do not invent measurements or claim all OHealth metrics exist.
 
 - [ ] Produce reproducible phone/watch release APKs and sideload instructions,
   with versioning that permits in-place updates.
-- [ ] Keep package identity and the single local signing key consistent between
-  paired modules; store the key outside the repository with a backup.
+- [x] Keep package identity and the single local signing key consistent between
+  paired modules; store the key outside the repository with a backup. See
+  [stage 4 release signing](04-phone-and-watch.md#release-signing-2026-11-24).
 - [ ] Write release notes with known limitations and rollback/recovery steps.
 
 Play Console distribution is out of scope for this household release.
