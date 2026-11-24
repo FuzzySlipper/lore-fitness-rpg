@@ -97,8 +97,13 @@ guided drills, corrections/undo and quiet hours.
 
 ### Devices (2026-11-23)
 
-Both are connected to den-lore by USB. The razr ultra shows as `ZD222V8F3K`
-(USB debugging on, authorization pending on the phone at the time of writing).
+Both are connected to den-lore by USB. The razr ultra is `ZD222V8F3K`,
+`motorola_razr_ultra_2025`, Android 16, authorized for den-lore's adb on
+2026-11-23 (USB set to tethering, which does not matter for adb). The phone
+debug build is installed: it opened, synced with den-lore's real ledger (empty:
+level 1, 0 XP) and screencap reports two displays (main and cover). Health
+Connect access is not granted yet; that is a tap on the phone for Patch or Lore
+("Connect OHealth data").
 The Watch 3 shows as "OPWE242" in file-transfer mode only: its USB debugging is
 not on yet. den-lore's `adb` is `C:\dev\bt-haptic\tools\platform-tools\adb.exe`;
 from an SSH session it needs `TMP`/`TEMP` pointed at a writable folder
