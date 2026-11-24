@@ -42,8 +42,12 @@ if ($listener) {
 }
 
 # 3. Back up the data (not Marinara's own backups, models or sidecar runtime) and .env.
-robocopy $marinaraData (Join-Path $backup 'Marinara-Data') /E /XD (Join-Path $marinaraData 'backups') (Join-Path $marinaraData 'models') (Join-Path $marinaraData 'sidecar-runtime') /R:1 /W:1 /NP /NFL /NDL | Out-Null
-if ($LASTEXITCODE -ge 8) { Say "data backup failed (robocopy $LASTEXITCODE); not switching"; exit 1 }
+$copyLog = Join-Path $backup 'robocopy.log'
+robocopy $marinaraData (Join-Path $backup 'Marinara-Data') /E /XD (Join-Path $marinaraData 'backups') (Join-Path $marinaraData 'models') (Join-Path $marinaraData 'sidecar-runtime') /R:1 /W:1 /NP /NFL /NDL /LOG:$copyLog | Out-Null
+# Some folders refuse their attributes (robocopy counts them as failed directories); only a file
+# that did not copy means the backup is incomplete.
+$files = Select-String -Path $copyLog -Pattern '^\s*Files :\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)' | Select-Object -Last 1
+if (-not $files -or [int]$files.Matches[0].Groups[5].Value -gt 0) { Say "data backup incomplete (see $copyLog); not switching"; exit 1 }
 Copy-Item .env (Join-Path $backup 'Marinara-Engine.env')
 Start-ScheduledTask -TaskName 'lore-fitness-ledger-backup' -ErrorAction SilentlyContinue
 Say "backed up to $backup"
