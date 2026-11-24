@@ -102,8 +102,15 @@ Both are connected to den-lore by USB. The razr ultra is `ZD222V8F3K`,
 2026-11-23 (USB set to tethering, which does not matter for adb). The phone
 debug build is installed: it opened, synced with den-lore's real ledger (empty:
 level 1, 0 XP) and screencap reports two displays (main and cover). Health
-Connect access is not granted yet; that is a tap on the phone for Patch or Lore
-("Connect OHealth data").
+Connect access was granted by Patch (steps, exercise, hydration and background
+reading, all `granted=true`), but the first import read 0 records: OHealth
+(`com.heytap.health.international` 5.1.10) declares Health Connect write
+permissions for steps, exercise, distance, calories, heart rate, sleep and
+others, and none of them was granted, so it was not exporting anything. It
+declares no hydration write permission at all, so hydration from OHealth is not
+expected; water stays a manual or watch check-in (the stage 1 default for a
+missing record type). Next: allow OHealth's writes in Health Connect (or OHealth's
+own Health Connect sync setting) and read again.
 The Watch 3 shows as "OPWE242" in file-transfer mode only: its USB debugging is
 not on yet. den-lore's `adb` is `C:\dev\bt-haptic\tools\platform-tools\adb.exe`;
 from an SSH session it needs `TMP`/`TEMP` pointed at a writable folder
