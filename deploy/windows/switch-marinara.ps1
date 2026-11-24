@@ -55,18 +55,26 @@ Say "backed up to $backup"
 # 4. Move the branch and build with the repository's pinned pnpm under the .nvmrc Node.
 if ($dirty.Count) { git checkout -- $dirty; Say "reset $($dirty.Count) tracked files (saved elsewhere)" }
 git merge --ff-only $Branch 2>&1 | ForEach-Object { Add-Content $log $_ }
-$fnm = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\fnm.exe'
+# The Node the checkout pins in .nvmrc (a major version, such as 25), from fnm's installs; Node 25
+# has no Corepack, so the pinned pnpm comes through npx.
+$major = (Get-Content .nvmrc).Trim().TrimStart('v').Split('.')[0]
+$nodeDir = Get-ChildItem (Join-Path $env:APPDATA 'fnm\node-versions') -Directory |
+    Where-Object { $_.Name -like "v$major.*" } | Sort-Object { [version]($_.Name.TrimStart('v')) } -Descending |
+    Select-Object -First 1 | ForEach-Object { Join-Path $_.FullName 'installation' }
+if (-not $nodeDir) { Say "no Node $major under fnm; not building"; exit 1 }
+$env:PATH = "$nodeDir;$env:PATH"
 $pnpmVersion = ((Get-Content package.json | ConvertFrom-Json).packageManager -replace '^pnpm@', '' -split '\+')[0]
 function Pnpm([string]$what) {
-    & $fnm exec --using "$engine\.nvmrc" cmd.exe /d /c "corepack pnpm@$pnpmVersion $what >> `"$log`" 2>&1 || npx --yes pnpm@$pnpmVersion $what >> `"$log`" 2>&1"
-    $LASTEXITCODE
+    cmd.exe /d /c "npx --yes pnpm@$pnpmVersion $what >> `"$log`" 2>&1"
+    return $LASTEXITCODE
 }
-$ok = (Pnpm 'install --frozen-lockfile') -eq 0 -and (Pnpm 'build') -eq 0
-if (-not $ok) {
-    Say "build failed; returning to $previous"
+$installed = Pnpm 'install --frozen-lockfile'
+$built = if ($installed -eq 0) { Pnpm 'build' } else { $installed }
+if ($built -ne 0) {
+    Say "install or build failed ($installed/$built); returning to $previous"
     git reset --hard $previous 2>&1 | ForEach-Object { Add-Content $log $_ }
     Pnpm 'install --frozen-lockfile' | Out-Null; Pnpm 'build' | Out-Null
-} else { Say "built $(git rev-parse --short HEAD)" }
+} else { Say "built $(git rev-parse --short HEAD) with Node $major and pnpm $pnpmVersion" }
 
 # 5. Start it in Lore's desktop session, as the desktop shortcut does.
 $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $env:USERPROFILE 'Desktop\Marinara.lnk'))
