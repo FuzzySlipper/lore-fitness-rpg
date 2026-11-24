@@ -143,6 +143,17 @@ fresh one.
   and it then held den-lore's real state (level 1, nothing earned).
 - The watch's sync request reached the phone (`/lfr/sync` in the watch's Data
   Layer log).
+- The phone is also reached by wireless debugging now (paired, then `adb connect`
+  to the IP:port on its Wireless debugging screen; it does not advertise itself
+  over mDNS). Its screencap needs `-d <display id>` because the razr has two
+  displays (main 4630947043778501779, cover …780).
+- OHealth still exports nothing after Patch turned on its Health Connect sharing
+  (2026-11-24, about 02:00): Health Connect's own "Data and access" says "No data"
+  and its diagnostics show no write quota used by OHealth, while our app reads in
+  the foreground and from the 15-minute background pass. Next check: after OHealth
+  has synced new activity from the watch, and OHealth's own export setting.
+  Android 16 also offers on-phone step counting into Health Connect ("New activity
+  metrics tracked"); not enabled, since the watch's count is the better source.
 - Not yet done on the devices: a watch check-in through the phone to the ledger
   and its acknowledgment (deliberately not faked into Lore's real journal), and
   shake to roll with a real resolved roll.
