@@ -92,6 +92,11 @@ private fun App() {
             if (result == SnackbarResult.ActionPerformed) { Sync.undo(context, record); sync() }
         }
     }
+    // The razr's cover screen is short (about 565 dp): there the compact view replaces the tabs.
+    if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 640) {
+        CoverScreen(state, syncing, sync, snackbar, logged)
+        return
+    }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = { TopAppBar(title = { Text("Inquisition Training") }) },

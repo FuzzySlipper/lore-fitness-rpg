@@ -36,7 +36,8 @@ and updates. The existing Marinara Termux/WebView APK is not this companion.
 - [x] Persistent pending entries, retries and acknowledgment handling.
 - [x] Notifications that respect preferences and reflect actual committed state.
 - [ ] Folded/unfolded presentation and practical Razr cover-display actions where
-  supported by the installed device software.
+  supported by the installed device software. Compact cover view built (2026-11-24); not
+  yet seen on the real cover screen.
 
 ## Watch work
 
@@ -271,6 +272,24 @@ heart rate 104"; with the sensor permissions refused, Cassandra's discipline ran
 as a timer showing "Sensors not permitted; timing only". Version 0.3.0 (code 3)
 installed in place on both devices with the release key; the phone kept its
 Health Connect grants. Not yet run on the real watch (it sits on its charger).
+
+### Razr cover screen (2026-11-24)
+
+The razr ultra's cover screen is 1080 × 1272 px at 360 dpi (about 480 × 565 dp);
+the main screen is 1224 × 2992 at 480 dpi. When the app's window is under 640 dp
+tall it shows a compact cover view instead of the tabs: the level, "N of 6 ready"
+(and anything waiting), Sync, and the six categories as big tiles in three rows
+that share the height. A tap logs that check-in with the usual Undo; earned
+categories show a check and do nothing; a category still in the queue shows
+"waiting". The full app returns when the phone is opened.
+
+Verified in the phone emulator set to the cover screen's size and density
+(`wm size 1080x1272`, `wm density 360`, reset afterwards): the compact view
+filled the screen below the status bar, and tapping Meal habit marked it earned
+and gave "Meal habit check-in … +20 XP" in the scratch ledger. Version 0.4.0
+installed in place on both devices. Not yet seen on the real cover screen: an app
+runs there only when it is allowed in Motorola's external-display settings
+(Settings → External display → apps), and the phone was open.
 
 ## Source selection and synchronization
 
