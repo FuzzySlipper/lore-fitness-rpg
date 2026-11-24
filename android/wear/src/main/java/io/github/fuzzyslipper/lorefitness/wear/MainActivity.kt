@@ -63,10 +63,23 @@ private fun Skyhold() {
     val scope = rememberCoroutineScope()
     var phoneReachable by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) { store.loadFromDataLayer(); phoneReachable = store.sendPending() }
+    var screen by remember { mutableStateOf("home") }
+    var drill by remember { mutableStateOf<Drill?>(null) }
     val roll = state.unseenRoll
-    if (roll != null) {
+    if (roll != null && screen == "home") {
         RollScreen(roll) { store.markRollSeen(roll.optString("id")) }
         return
+    }
+    when (screen) {
+        "drills" -> { DrillList(onPick = { drill = it; screen = "run" }, onBack = { screen = "home" }); return }
+        "run" -> drill?.let { d ->
+            DrillRun(d) { minutes ->
+                store.drillDone(d, minutes)
+                scope.launch { phoneReachable = store.sendPending() }
+                screen = "home"
+            }
+            return
+        }
     }
     val phone = state.phoneState
     val character = phone?.optJSONObject("character")
@@ -94,6 +107,15 @@ private fun Skyhold() {
                 onClick = { store.checkIn(Category.REST); scope.launch { phoneReachable = store.sendPending() }; buzz(context, 40) },
                 label = { Text("Recovery") },
                 colors = ChipDefaults.primaryChipColors(backgroundColor = Color(0xFF4E6B3A)),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Chip(
+                onClick = { screen = "drills" },
+                label = { Text("Training yard") },
+                secondaryLabel = { Text("Guided drills") },
+                colors = ChipDefaults.secondaryChipColors(),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -165,7 +187,7 @@ private fun ShakeDetector(enabled: Boolean, onShake: () -> Unit) {
     }
 }
 
-private fun buzz(context: Context, ms: Long) {
+internal fun buzz(context: Context, ms: Long) {
     val vibrator = context.getSystemService(Vibrator::class.java) ?: return
     vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
 }

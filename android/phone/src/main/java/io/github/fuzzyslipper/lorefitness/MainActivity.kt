@@ -27,6 +27,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
@@ -73,6 +76,7 @@ private fun App() {
     val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(Tab.TODAY) }
     var syncing by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
     val sync: () -> Unit = {
         if (!syncing) scope.launch { syncing = true; Sync.run(context); syncing = false }
     }
@@ -81,7 +85,14 @@ private fun App() {
         if (Build.VERSION.SDK_INT >= 33) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         sync()
     }
+    val logged: (io.github.fuzzyslipper.lorefitness.core.ActivityRecord, String) -> Unit = { record, label ->
+        scope.launch {
+            val result = snackbar.showSnackbar("Logged $label", actionLabel = "Undo", withDismissAction = true)
+            if (result == SnackbarResult.ActionPerformed) { Sync.undo(context, record); sync() }
+        }
+    }
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = { TopAppBar(title = { Text("Inquisition Training") }) },
         bottomBar = {
             NavigationBar {
@@ -93,7 +104,7 @@ private fun App() {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             when (tab) {
-                Tab.TODAY -> TodayScreen(state, syncing, sync)
+                Tab.TODAY -> TodayScreen(state, syncing, sync, logged)
                 Tab.JOURNAL -> JournalScreen(state)
                 Tab.SETTINGS -> SettingsScreen(store)
             }
@@ -102,7 +113,12 @@ private fun App() {
 }
 
 @Composable
-private fun TodayScreen(state: UiState, syncing: Boolean, sync: () -> Unit) {
+private fun TodayScreen(
+    state: UiState,
+    syncing: Boolean,
+    sync: () -> Unit,
+    logged: (io.github.fuzzyslipper.lorefitness.core.ActivityRecord, String) -> Unit,
+) {
     val context = LocalContext.current
     val healthLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { sync() }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -133,7 +149,11 @@ private fun TodayScreen(state: UiState, syncing: Boolean, sync: () -> Unit) {
                     when {
                         earned -> Text("✓ Earned", color = Gold)
                         category.id in state.pendingCategories -> Text("Waiting to send", style = MaterialTheme.typography.bodySmall)
-                        else -> Button(onClick = { Sync.manualCheckIn(context, category); sync() }) { Text("Log") }
+                        else -> Button(onClick = {
+                            val record = Sync.manualCheckIn(context, category)
+                            sync()
+                            logged(record, category.label)
+                        }) { Text("Log") }
                     }
                 }
             }
@@ -232,6 +252,19 @@ private fun SettingsScreen(store: Store) {
             }) { Text("Test") }
         }
         if (test.isNotEmpty()) Text(test)
+        Text("Ravens are quiet between", fontWeight = FontWeight.SemiBold)
+        var quietStart by remember { mutableStateOf(store.quietStart.toString()) }
+        var quietEnd by remember { mutableStateOf(store.quietEnd.toString()) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(value = quietStart, onValueChange = { quietStart = it.filter(Char::isDigit).take(2) }, singleLine = true, modifier = Modifier.weight(1f), label = { Text("from (hour)") })
+            OutlinedTextField(value = quietEnd, onValueChange = { quietEnd = it.filter(Char::isDigit).take(2) }, singleLine = true, modifier = Modifier.weight(1f), label = { Text("until (hour)") })
+            OutlinedButton(onClick = {
+                quietStart.toIntOrNull()?.let { store.quietStart = it }
+                quietEnd.toIntOrNull()?.let { store.quietEnd = it }
+                test = if (store.quietStart == store.quietEnd) "Ravens are never held back."
+                else "Quiet from ${store.quietStart}:00 until ${store.quietEnd}:00; ravens wait and arrive afterwards."
+            }) { Text("Set") }
+        }
         Text("This phone: ${store.clientId}", style = MaterialTheme.typography.bodySmall)
         Text("On the home network the journal is at ${Store.DEFAULT_SERVER}. Away from home, check-ins wait here and are sent when it can be reached again.", style = MaterialTheme.typography.bodySmall)
     }

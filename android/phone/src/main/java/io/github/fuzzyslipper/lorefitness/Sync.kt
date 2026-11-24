@@ -54,6 +54,16 @@ object Sync {
     }
 
     /**
+     * Takes back a check-in made by mistake: the same record again with a higher revision, marked
+     * deleted, which the ledger treats as the source withdrawing it (its check-in is reversed if it
+     * was the only support). Queued like any other change, so it works offline too.
+     */
+    fun undo(context: Context, record: ActivityRecord) {
+        Store.get(context).enqueue(record.copy(revision = record.revision + 1, deleted = true))
+        requestSoon(context)
+    }
+
+    /**
      * One pass: import from Health Connect, send everything queued, then refresh the summary,
      * journal and resolved rolls and hand the watch its copy. Returns the records the ledger
      * accepted, so the watch can be told which of its check-ins arrived.
@@ -80,6 +90,7 @@ object Sync {
             val journal = client.journal(40)
             val rolls = client.bonusRolls("resolved")
             store.saveSync(summary, journal, rolls, null, now)
+            runCatching { Ravens.deliver(context, journal, summary) }
         } catch (e: Exception) {
             store.saveSync(null, null, null, e.message ?: e.toString(), now)
         }

@@ -32,6 +32,23 @@ class Store(context: Context) {
         get() = prefs.getLong("healthReadFrom", 0)
         set(value) { prefs.edit().putLong("healthReadFrom", value).commit() }
 
+    /** Quiet hours for ravens, as hours of the day; start == end means never quiet. */
+    var quietStart: Int
+        get() = prefs.getInt("quietStart", 22)
+        set(value) { prefs.edit().putInt("quietStart", value.coerceIn(0, 23)).commit() }
+    var quietEnd: Int
+        get() = prefs.getInt("quietEnd", 8)
+        set(value) { prefs.edit().putInt("quietEnd", value.coerceIn(0, 23)).commit() }
+
+    fun inQuietHours(now: java.time.LocalTime): Boolean {
+        val h = now.hour
+        return when {
+            quietStart == quietEnd -> false
+            quietStart < quietEnd -> h in quietStart until quietEnd
+            else -> h >= quietStart || h < quietEnd
+        }
+    }
+
     // ── The pending queue ──
 
     fun pending(): List<ActivityRecord> = synchronized(lock) { readQueue().values.toList() }

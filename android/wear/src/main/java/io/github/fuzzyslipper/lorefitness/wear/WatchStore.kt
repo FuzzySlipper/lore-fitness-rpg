@@ -35,6 +35,7 @@ class WatchStore(context: Context) {
         }
         edit.commit()
         _state.value = load()
+        refreshSurfaces(app)
     }
 
     fun markRollSeen(id: String) {
@@ -45,8 +46,8 @@ class WatchStore(context: Context) {
     }
 
     /** A check-in on the wrist: kept here until the phone says the ledger has it. */
-    fun checkIn(category: Category): ActivityRecord {
-        val record = ActivityRecord(
+    fun checkIn(category: Category): ActivityRecord = queue(
+        ActivityRecord(
             source = "lfr-watch",
             sourceRecordId = UUID.randomUUID().toString(),
             revision = 1,
@@ -55,12 +56,35 @@ class WatchStore(context: Context) {
             start = Instant.now().toString(),
             timeZone = ZoneId.systemDefault().id,
             quantities = if (category == Category.HYDRATION) mapOf("goalMet" to 1) else emptyMap(),
+        ),
+    )
+
+    /** A finished guided drill, with the minutes actually done. */
+    fun drillDone(drill: Drill, minutes: Int): ActivityRecord {
+        val end = Instant.now()
+        return queue(
+            ActivityRecord(
+                source = "lfr-watch",
+                sourceRecordId = UUID.randomUUID().toString(),
+                revision = 1,
+                kind = drill.kind,
+                category = drill.category.id,
+                start = end.minusSeconds(minutes * 60L).toString(),
+                end = end.toString(),
+                timeZone = ZoneId.systemDefault().id,
+                quantities = mapOf("durationMin" to minutes),
+                note = drill.title,
+            ),
         )
+    }
+
+    private fun queue(record: ActivityRecord): ActivityRecord {
         synchronized(lock) {
             val pending = JSONArray(prefs.getString("pending", "[]")).apply { put(record.toStorage()) }
             prefs.edit().putString("pending", pending.toString()).commit()
         }
         _state.value = load()
+        refreshSurfaces(app)
         return record
     }
 
@@ -70,6 +94,7 @@ class WatchStore(context: Context) {
             .filter { ActivityRecord.fromStorage(it).key != key })
         prefs.edit().putString("pending", kept.toString()).commit()
         _state.value = load()
+        refreshSurfaces(app)
     }
 
     fun pending(): List<ActivityRecord> = synchronized(lock) {
