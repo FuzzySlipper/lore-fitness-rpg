@@ -109,8 +109,14 @@ permissions for steps, exercise, distance, calories, heart rate, sleep and
 others, and none of them was granted, so it was not exporting anything. It
 declares no hydration write permission at all, so hydration from OHealth is not
 expected; water stays a manual or watch check-in (the stage 1 default for a
-missing record type). Next: allow OHealth's writes in Health Connect (or OHealth's
-own Health Connect sync setting) and read again.
+missing record type). Patch then granted all of OHealth's write permissions in Health
+Connect. Our app still read 0 records, also after OHealth was opened for a
+minute, and Health Connect's `dumpsys` lists rate-limit usage for our app's
+foreground and background reads (the 15-minute WorkManager pass works) but none
+for OHealth: it has written nothing. Granting the permissions does not start
+OHealth's export by itself; its own sync setting is next. The watch now shows up
+to adb as `L631105000030F6E015L` (debugging on, authorization pending on the
+watch).
 The Watch 3 shows as "OPWE242" in file-transfer mode only: its USB debugging is
 not on yet. den-lore's `adb` is `C:\dev\bt-haptic\tools\platform-tools\adb.exe`;
 from an SSH session it needs `TMP`/`TEMP` pointed at a writable folder
