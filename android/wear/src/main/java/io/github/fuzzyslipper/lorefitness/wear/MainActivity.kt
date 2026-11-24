@@ -62,7 +62,7 @@ private fun Skyhold() {
     val state by store.state.collectAsState()
     val scope = rememberCoroutineScope()
     var phoneReachable by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) { phoneReachable = store.sendPending() }
+    LaunchedEffect(Unit) { store.loadFromDataLayer(); phoneReachable = store.sendPending() }
     val roll = state.unseenRoll
     if (roll != null) {
         RollScreen(roll) { store.markRollSeen(roll.optString("id")) }

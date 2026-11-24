@@ -77,6 +77,23 @@ class WatchStore(context: Context) {
         (0 until pending.length()).map { ActivityRecord.fromStorage(pending.getJSONObject(it)) }
     }
 
+    /**
+     * Reads the phone's last published state straight from the Data Layer. A listener only hears
+     * about changes, so state the phone published before this app was installed (or while it was not
+     * running) is picked up here, when the app opens.
+     */
+    suspend fun loadFromDataLayer() {
+        val items = runCatching { Wearable.getDataClient(app).dataItems.await() }.getOrNull() ?: return
+        try {
+            val latest = items.filter { it.uri.path == DataLayer.STATE }
+                .map { com.google.android.gms.wearable.DataMapItem.fromDataItem(it).dataMap }
+                .maxByOrNull { it.getLong("at") }
+            latest?.getString(DataLayer.KEY_STATE)?.let(::saveState)
+        } finally {
+            items.release()
+        }
+    }
+
     /** Sends every unconfirmed check-in to the phone; false when no phone is reachable. */
     suspend fun sendPending(): Boolean {
         val nodes = runCatching { Wearable.getNodeClient(app).connectedNodes.await() }.getOrDefault(emptyList())

@@ -122,6 +122,31 @@ not on yet. den-lore's `adb` is `C:\dev\bt-haptic\tools\platform-tools\adb.exe`;
 from an SSH session it needs `TMP`/`TEMP` pointed at a writable folder
 (`C:\Dev\Lore-Fitness-RPG-Data\tmp`), and its server exits with the session.
 
+### On the devices (2026-11-24)
+
+The phone and watch moved to den-agents' desk; den-agents is a VM with no USB
+passthrough, so both are reached by Wi-Fi wireless debugging from den-agents
+(`adb pair IP:PORT CODE` with the code the device shows, then the device
+advertises itself over mDNS). The watch paired: OPWE242, Wear OS 5 (Android 14,
+API 34), Google Play services 26.45, Data Layer connected to the phone over
+Bluetooth. The phone's pairing code had expired before it was used; it needs a
+fresh one.
+
+- The watch app installed and runs. While the watch sits on its charger,
+  OnePlus's full-screen charging display covers every app and takes taps, so
+  screenshots and taps cannot reach the app then.
+- Found and fixed: the phone had been publishing `/lfr/state` since it was
+  installed (the watch's Data Layer counted 23 updates for the app), but the
+  watch app saved none of it. A listener only hears changes; state published
+  before the watch app existed, or while it was not running, is only in the Data
+  Layer store. The watch app now reads `/lfr/state` from the store when it opens,
+  and it then held den-lore's real state (level 1, nothing earned).
+- The watch's sync request reached the phone (`/lfr/sync` in the watch's Data
+  Layer log).
+- Not yet done on the devices: a watch check-in through the phone to the ledger
+  and its acknowledgment (deliberately not faked into Lore's real journal), and
+  shake to roll with a real resolved roll.
+
 ## Source selection and synchronization
 
 OHealth stays the main source for ordinary workouts; import them from Health
