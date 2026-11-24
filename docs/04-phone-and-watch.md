@@ -1,6 +1,6 @@
 # Stage 4 — Android and Wear OS companions
 
-Status: In progress (first version built; phone app verified in an emulator). Owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-23). Updated: 2026-11-23.
+Status: In progress (phone and watch apps built with ravens, undo, tile, complication and drills; verified in emulators; installed on Lore's razr and Watch 3). Owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-23). Updated: 2026-11-24.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: Marinara integration](03-marinara-integration.md) ·
@@ -27,13 +27,13 @@ and updates. The existing Marinara Termux/WebView APK is not this companion.
   permissions, with understandable capability/sync status.
 - [ ] Today dashboard, current mission, daily check-ins, rewards, journal and
   recent history.
-- [ ] Fast workout, walk, mobility, meal, water and recovery entry.
+- [x] Fast workout, walk, mobility, meal, water and recovery entry.
 - [ ] Corrections, undo, backdating, goal preferences and quiet hours.
 - [ ] Health Connect import using supported records, source identity and versions.
 - [ ] Cumulative-data aggregation and cross-source reconciliation.
-- [ ] Foreground sync and supported/permitted scheduled background reads.
-- [ ] Persistent pending entries, retries and acknowledgment handling.
-- [ ] Notifications that respect preferences and reflect actual committed state.
+- [x] Foreground sync and supported/permitted scheduled background reads.
+- [x] Persistent pending entries, retries and acknowledgment handling.
+- [x] Notifications that respect preferences and reflect actual committed state.
 - [ ] Folded/unfolded presentation and practical Razr cover-display actions where
   supported by the installed device software.
 
@@ -157,6 +157,37 @@ fresh one.
 - Not yet done on the devices: a watch check-in through the phone to the ledger
   and its acknowledgment (deliberately not faked into Lore's real journal), and
   shake to roll with a real resolved roll.
+
+### Second pass (2026-11-24)
+
+Defaults recorded:
+
+| Item | Default |
+| --- | --- |
+| Ravens | Phone notifications ("A raven from Leliana") for new journal entries of kind `check-in`, `bonus-roll` and `spend`, and for a level gained, worded from the ledger's own message. The first sync after install marks the journal as seen. Several arrive as one notification. Wear OS mirrors phone notifications to the watch |
+| Quiet hours | 22:00–08:00 by default, set in Settings (equal hours mean never quiet). Ravens due in quiet hours wait and arrive together afterwards; none are dropped. A withdrawal cancels a waiting raven for its check-in, and is announced itself when that raven already flew |
+| Undo | After a phone check-in, an Undo action resends the same record with a higher revision and `deleted: true`; the ledger withdraws the check-in if it was the only support. Queued, so it also works offline |
+| Tile | "Skyhold": an arc of today's earned categories out of six, "N of 6 ready", level, check-ins waiting for the phone, and a tap into the app; redrawn whenever the phone's state or a check-in changes it |
+| Complication | "Skyhold readiness", `RANGED_VALUE` (0–6) or `SHORT_TEXT` ("4/6"), for watch faces that accept third-party complications |
+| Guided drills | Cullen's drill (Strength, `bodyweight`, ten rounds of 40 s work and 20 s rest), Iron Bull's conditioning (Moved, `movement`, 15 minutes with a nudge every 3), Cassandra's discipline (Mobility, `stretch`, eight one-minute holds). Haptic cues at each step and the last three seconds, the screen kept on, pause, resume and finish early; a finished drill logs a watch check-in with the minutes done (at least one) and the drill's name. Fixed sessions: nothing gets harder because the last one went well. Health Services recording is not used yet |
+
+Verified in emulators (phone Android 15 against the scratch ledger; Wear OS 4
+emulator for the watch):
+
+- Ravens: a check-in at 02:26 waited ("waiting" held the line, no notification);
+  logging and undoing a check-in left nothing waiting; with quiet hours off, a
+  check-in posted "A raven from Leliana" with the ledger's message.
+- Undo: the ledger recorded "deleted at source" and withdrew the check-in (−20
+  XP, category no longer earned).
+- Drills: list, Cullen's opening line, the running count ("Round 1: work 0:35"),
+  Finish, the closing line and Log, which queued `bodyweight`/strength with
+  `durationMin`, start, end and the note "Cullen's drill".
+- Tile: "Open Skyhold · Waiting for the phone" without state; with a synthetic
+  state, "3 of 6 ready · Level 4 · 1 waiting" and the arc half filled.
+
+Installed on Lore's devices over wireless debugging; the Skyhold tile was added
+on the watch with the debug-surface command. Not yet seen on the devices: the
+tile, a drill, a raven mirrored to the watch, the complication on a watch face.
 
 ## Source selection and synchronization
 
