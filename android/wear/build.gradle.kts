@@ -57,4 +57,6 @@ dependencies {
     implementation("androidx.wear.protolayout:protolayout-material:1.2.1")
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1")
     implementation("com.google.guava:guava:33.3.1-android")
+    implementation("androidx.health:health-services-client:1.1.0-alpha05")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.9.0")
 }

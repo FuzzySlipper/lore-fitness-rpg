@@ -59,9 +59,22 @@ class WatchStore(context: Context) {
         ),
     )
 
-    /** A finished guided drill, with the minutes actually done. */
-    fun drillDone(drill: Drill, minutes: Int): ActivityRecord {
+    /**
+     * A finished guided drill: the minutes actually done (Health Services' active time when it
+     * recorded the drill), calories when measured, and the average heart rate in the note.
+     */
+    fun drillDone(drill: Drill, minutes: Int, reading: DrillRecorder.Reading? = null): ActivityRecord {
         val end = Instant.now()
+        val measuredMinutes = reading?.activeSeconds?.let { maxOf(1, ((it + 30) / 60).toInt()) }
+        val quantities = buildMap<String, Number> {
+            put("durationMin", measuredMinutes ?: minutes)
+            reading?.calories?.takeIf { it > 0 }?.let { put("energyKcal", it.toInt()) }
+        }
+        val note = listOfNotNull(
+            drill.title,
+            reading?.averageHeartRate?.let { "average heart rate $it" },
+            reading?.note?.takeIf { reading.recording.not() },
+        ).joinToString("; ")
         return queue(
             ActivityRecord(
                 source = "lfr-watch",
@@ -69,11 +82,11 @@ class WatchStore(context: Context) {
                 revision = 1,
                 kind = drill.kind,
                 category = drill.category.id,
-                start = end.minusSeconds(minutes * 60L).toString(),
+                start = end.minusSeconds((measuredMinutes ?: minutes) * 60L).toString(),
                 end = end.toString(),
                 timeZone = ZoneId.systemDefault().id,
-                quantities = mapOf("durationMin" to minutes),
-                note = drill.title,
+                quantities = quantities,
+                note = note,
             ),
         )
     }

@@ -9,7 +9,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -94,21 +101,38 @@ fun DrillList(onPick: (Drill) -> Unit, onBack: () -> Unit) {
     }
 }
 
-/** Runs a drill: cues with haptics, pause and resume, and a finish that logs the minutes done. */
+/**
+ * Runs a drill: cues with haptics, pause and resume, and a finish that logs the minutes done. It is
+ * recorded through Health Services when the watch allows, and timed otherwise.
+ */
 @Composable
-fun DrillRun(drill: Drill, onDone: (minutes: Int) -> Unit) {
+fun DrillRun(drill: Drill, onDone: (minutes: Int, reading: DrillRecorder.Reading) -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val recorder = remember { DrillRecorder(context) }
+    val reading by recorder.reading.collectAsState()
+    val sensors = arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.ACTIVITY_RECOGNITION)
+    fun granted() = sensors.all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
     var stepIndex by remember { mutableIntStateOf(0) }
     var left by remember { mutableIntStateOf(drill.steps.first().seconds) }
     var elapsed by remember { mutableIntStateOf(0) }
     var paused by remember { mutableStateOf(true) }
     var started by remember { mutableStateOf(false) }
     var finished by remember { mutableStateOf(false) }
+    fun begin() {
+        started = true; paused = false; buzz(context, 200)
+        scope.launch { recorder.start(drill, granted()) }
+    }
+    val askSensors = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { begin() }
     // The screen stays on while a drill runs, so the cues are readable at a glance.
     DisposableEffect(Unit) {
         val window = (context as? Activity)?.window
         window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            // Leaving the drill any other way still ends the recording.
+            kotlinx.coroutines.MainScope().launch { recorder.finish() }
+        }
     }
     LaunchedEffect(paused, finished) {
         while (!paused && !finished) {
@@ -135,18 +159,27 @@ fun DrillRun(drill: Drill, onDone: (minutes: Int) -> Unit) {
             when {
                 finished -> {
                     Text(drill.closing, textAlign = TextAlign.Center, style = MaterialTheme.typography.caption2)
-                    Button(onClick = { onDone(maxOf(1, elapsed / 60)) }) { Text("Log") }
+                    Button(onClick = { scope.launch { onDone(maxOf(1, elapsed / 60), recorder.finish()) } }) { Text("Log") }
                 }
                 !started -> {
                     Text(drill.opening, textAlign = TextAlign.Center, style = MaterialTheme.typography.caption2)
-                    Button(onClick = { started = true; paused = false; buzz(context, 200) }) { Text("Start") }
+                    Button(onClick = {
+                        if (granted()) begin() else askSensors.launch(sensors)
+                    }) { Text("Start") }
                 }
                 else -> {
                     Text(step.cue, style = MaterialTheme.typography.caption1)
                     Text("%d:%02d".format(left / 60, left % 60), fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                    Text("${elapsed / 60} min done", style = MaterialTheme.typography.caption3)
+                    Text(
+                        listOfNotNull("${elapsed / 60} min done", reading.heartRate?.let { "♥ $it" }).joinToString(" · "),
+                        style = MaterialTheme.typography.caption3,
+                    )
+                    reading.note?.let { Text(it, style = MaterialTheme.typography.caption3, textAlign = TextAlign.Center) }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        CompactChip(onClick = { paused = !paused }, label = { Text(if (paused) "Resume" else "Pause") })
+                        CompactChip(onClick = {
+                            paused = !paused
+                            scope.launch { if (paused) recorder.pause() else recorder.resume() }
+                        }, label = { Text(if (paused) "Resume" else "Pause") })
                         CompactChip(onClick = { finished = true; paused = true }, label = { Text("Finish") })
                     }
                 }

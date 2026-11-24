@@ -246,6 +246,32 @@ notification and the phone's Health Connect read permissions were restored with
 devices run 0.2.0; the watch's sync request reached the phone afterwards. From now
 on updates install in place and keep the queue, pending check-ins and grants.
 
+### Drills recorded through Health Services (2026-11-24)
+
+The watch has Health Services (`com.google.android.wearable.healthservices`
+0.99.6) and heart-rate, step-counter and accelerometer sensors. Guided drills now
+run as Health Services exercises:
+
+| Item | Default |
+| --- | --- |
+| Exercise type | The first the watch supports of: Cullen's drill `STRENGTH_TRAINING`, `CALISTHENICS`, `WORKOUT`; Iron Bull's `WALKING`, `WORKOUT`; Cassandra's `STRETCHING`, `YOGA`, `WORKOUT` |
+| Measured | `HEART_RATE_BPM` and `CALORIES_TOTAL` where the type offers them; no GPS, no auto-pause |
+| Controls | Pause, Resume and Finish drive the exercise; leaving the drill screen any other way also ends it |
+| Logged | `durationMin` from Health Services' active time (rounded to the nearest minute, at least 1), `energyKcal` when measured, and the average heart rate in the note; the timer's minutes when nothing was recorded |
+| Fallback | Runs as a timer, with the reason on screen and in the note, when the sensor permissions (`BODY_SENSORS`, `ACTIVITY_RECOGNITION`, asked at the first Start) are refused, another app such as OHealth is already recording a workout, the watch supports none of the types, or Health Services fails |
+
+The recorded drill is not written to Health Connect by the watch; it reaches the
+ledger as the watch's own check-in (source `lfr-watch`). If OHealth also logged
+the same effort, the day's category still earns one check-in.
+
+Verified on the Wear OS emulator with Health Services' synthetic walking user:
+Iron Bull's conditioning showed "Recording as walking" and live heart rate
+(65–110), and its check-in carried `durationMin: 2`, `energyKcal: 27` and "average
+heart rate 104"; with the sensor permissions refused, Cassandra's discipline ran
+as a timer showing "Sensors not permitted; timing only". Version 0.3.0 (code 3)
+installed in place on both devices with the release key; the phone kept its
+Health Connect grants. Not yet run on the real watch (it sits on its charger).
+
 ## Source selection and synchronization
 
 OHealth stays the main source for ordinary workouts; import them from Health

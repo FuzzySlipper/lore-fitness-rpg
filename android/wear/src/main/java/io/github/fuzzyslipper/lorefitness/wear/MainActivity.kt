@@ -73,8 +73,8 @@ private fun Skyhold() {
     when (screen) {
         "drills" -> { DrillList(onPick = { drill = it; screen = "run" }, onBack = { screen = "home" }); return }
         "run" -> drill?.let { d ->
-            DrillRun(d) { minutes ->
-                store.drillDone(d, minutes)
+            DrillRun(d) { minutes, reading ->
+                store.drillDone(d, minutes, reading)
                 scope.launch { phoneReachable = store.sendPending() }
                 screen = "home"
             }
