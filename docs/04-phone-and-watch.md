@@ -1,6 +1,6 @@
 # Stage 4 — Android and Wear OS companions
 
-Status: Planned. Owner: Unassigned. Updated: 2026-11-16.
+Status: In progress (first version built; phone app verified in an emulator). Owner: Claude Code session `s/a60d803335a9aa0a` (started 2026-11-23). Updated: 2026-11-23.
 
 [Outline](implementation.md) · [Progress](progress.md) ·
 [Previous: Marinara integration](03-marinara-integration.md) ·
@@ -57,6 +57,52 @@ and updates. The existing Marinara Termux/WebView APK is not this companion.
 - [ ] Cached mission/status and durable offline check-ins.
 - [ ] Paired-device transfer and acknowledgments with the phone companion.
 - [ ] Restrained completion haptics and readable active/ambient presentation.
+
+## First version (2026-11-23)
+
+Code: [`android/`](../android/) (Gradle 8.11.1 wrapper, AGP 8.7.3, Kotlin 2.0.21,
+Compose). Modules: `core` (ledger client, activity record, Data Layer paths),
+`phone` and `wear`. Build on den-agents with JDK 17 and the Android SDK under
+`~/.local/opt`:
+
+```bash
+cd android && JAVA_HOME=~/.local/opt/jdk17 ANDROID_HOME=~/.local/opt/android-sdk ./gradlew :phone:assembleDebug :wear:assembleDebug
+```
+
+Defaults recorded:
+
+| Item | Default |
+| --- | --- |
+| Identity | Both apps are `io.github.fuzzyslipper.lorefitness`, one `versionCode` in `gradle.properties`, signed with the same key, because the Wear Data Layer only connects apps with the same package and signature. Engineering builds use den-agents' debug key; the release key comes with stage 6 packaging and stays outside the repository |
+| Minimum versions | Phone Android 9 (API 28), watch Wear OS 3 (API 30); target 35 and 34 |
+| Server | `http://192.168.1.25:7900` (den-lore), changeable in Settings; plain HTTP is allowed because the ledger is a household LAN service |
+| Queue | Every check-in and import goes into a SharedPreferences queue first, keyed by `(source, sourceRecordId)` with the newest revision winning, and leaves it only when the ledger answers with anything but `rejected` (rejected records are kept for display, not retried). WorkManager runs a pass every 15 minutes with a network; Sync now, a check-in and a watch request run one at once |
+| Health Connect | Reads steps, exercise sessions and hydration for the last three days on each pass. Steps become one daily total per source app and local day (`steps-YYYY-MM-DD`, source `hc:<package>`), so the ledger's best-single-source rule sees each app apart; sessions and hydration keep their Health Connect id; the last-modified time is the revision. Background reading asks for `READ_HEALTH_DATA_IN_BACKGROUND`; without it, imports happen when the app is open |
+| Manual check-ins | Source `lfr-phone` or `lfr-watch`, a random id, the category's own kind (`movement`, `strength`, `mobility`, `meal-habit`, `hydration` with `goalMet`, `recovery`) |
+| Watch path | The watch never calls the ledger. A check-in is stored on the watch and sent to the phone (`/lfr/check-in`); the phone queues it and answers `/lfr/check-in-ack` only after the ledger accepted it, and the watch resends until then. The phone publishes `/lfr/state` (today's character and categories, last ten resolved rolls) after each pass |
+| Shake to roll | The watch shows a resolved roll it has not shown before (rolls present at the first sync after install count as seen). A wrist flick (linear acceleration above 14 m/s²) or the Roll button plays the animation and lands on the stored result; the faces before it are animation only |
+
+Verified in an Android 15 emulator against a scratch ledger seeded with the
+steady persona (never the real ledger): the Today screen showed the persona's
+level 6, 1680/2100 XP and resources; Log on Mobility produced "Mobility
+check-in … +20 XP" in the ledger from client `razr-…`; with the ledger
+stopped, a Strength check-in stayed queued ("1 waiting to reach the journal",
+with the error), survived a force-stop, and reached the ledger when the app
+opened again with it back.
+
+Not yet verified: the watch app on any device, the Data Layer path, Health
+Connect import with real OHealth records, the background pass, and both apps on
+Lore's devices. Not yet built: tiles and the readiness complication, ravens,
+guided drills, corrections/undo and quiet hours.
+
+### Devices (2026-11-23)
+
+Both are connected to den-lore by USB. The razr ultra shows as `ZD222V8F3K`
+(USB debugging on, authorization pending on the phone at the time of writing).
+The Watch 3 shows as "OPWE242" in file-transfer mode only: its USB debugging is
+not on yet. den-lore's `adb` is `C:\dev\bt-haptic\tools\platform-tools\adb.exe`;
+from an SSH session it needs `TMP`/`TEMP` pointed at a writable folder
+(`C:\Dev\Lore-Fitness-RPG-Data\tmp`), and its server exits with the session.
 
 ## Source selection and synchronization
 
