@@ -221,23 +221,29 @@ in the real ledger. Before Lore's release, remove test activity with
 `POST /v1/activities/:id/delete` or start from a fresh ledger (stop, move
 `ledger.sqlite` aside, start).
 
-### Den Windows Backup is failing (found 2026-11-23)
+### Den Windows Backup lock (found and cleared 2026-11-23)
 
-den-lore's nightly "Den Windows Backup" task (restic, as SYSTEM, to
+den-lore's "Den Windows Backup" task (restic as SYSTEM to
 `sftp:den-windows-backup@192.168.1.9:/mnt/storage/backup/windows/restic`, then
-B2) has failed every run since about 2026-11-12 (result 11): the repository
-holds a stale lock created 2026-11-12 07:02, and restic's own message says to
-run `unlock`. This predates the fitness work. The path list now also names the
-`C:\Dev\Marinara-Data` folders, but nothing reaches den-nas until the lock is
-cleared. `restic unlock` run from an agent's SSH session hung without
-connecting, and running it as SYSTEM was not attempted (it needs Patch's
-go-ahead). To clear it, either run the backup task's own command with `unlock`
-in place of `backup` from an elevated prompt on den-lore, or run
-`restic -r /mnt/storage/backup/windows/restic unlock` on den-nas with the
-repository password; the next scheduled run (every two hours) should then
-succeed. Until then the ledger's own backups (in its data folder and
-`Documents\Lore Fitness RPG\ledger-backups`) and the pre-deploy copies are
-local to den-lore only.
+B2) had returned 11 on every run since about 2026-11-12. The backups themselves
+completed; the step after them, `tag --set windows` (which marks a snapshot
+complete for B2), needs an exclusive lock and kept finding one taken on
+2026-11-12 07:02 by PID 11676 on den-lore itself. Patch's `restic unlock` did not
+remove it; `restic unlock --remove-all`, run once as SYSTEM with no other restic
+process running, did ("successfully removed 1 locks"), and the next run
+returned 0 with "modified 1 snapshots". If it recurs: check that no restic is
+running on den-lore, then run the task's own command with
+`unlock --remove-all` in place of `backup`, as SYSTEM.
+
+The path list now holds `C:\Users\lore\Documents` plus these
+`C:\Dev\Marinara-Data` folders: `storage`, `sprites`, `backgrounds`,
+`backgrounds-thumbs`, `gallery`, `lorebooks`, `agents`, `prompts`,
+`long-term-memory`, `capability-packages`, `capability-runtime-snapshots`,
+`game-assets`, `avatars` and `.encryption-key` (about 2 GB; not Marinara's own
+`backups`, `models` or `sidecar-runtime`, about 35 GB). Restic needs every
+listed path to exist, so a new or removed Marinara folder means editing
+`C:\Users\lore\Den Backup\paths.txt`; the previous list is beside it as
+`paths.txt.before-marinara-data`.
 
 ## Integrated acceptance scenarios
 

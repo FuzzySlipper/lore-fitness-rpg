@@ -504,7 +504,9 @@ Validation: deploy branch checks on den-agents (listed in the runbook); on
 den-lore, Marinara answering on 7860 at `5a72dc88e` with the fitness routes
 live and the Training panel in the client build; the game in the GM list and
 its Start Game screen in a browser. Not done: a turn in her Marinara (Patch
-starts it), the reboot test, the restic dry run's result.
+starts it), the reboot test. The Den Windows Backup, failing since about
+2026-11-12 on a stale restic lock, was cleared the same evening and its next run
+succeeded with the new paths (see the runbook).
 
 Patch reports the razr and Watch 3 are connected to den-lore with USB debugging
 likely on, so stage 4 can start on the devices.
