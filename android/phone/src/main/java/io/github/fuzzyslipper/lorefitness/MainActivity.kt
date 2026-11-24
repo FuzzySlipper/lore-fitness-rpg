@@ -27,6 +27,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -65,7 +66,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Tab(val label: String) { TODAY("Today"), JOURNAL("Journal"), SETTINGS("Settings") }
+private enum class Tab(val label: String) { TODAY("Today"), HISTORY("History"), JOURNAL("Journal"), SETTINGS("Settings") }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +88,7 @@ private fun App() {
     }
     val logged: (io.github.fuzzyslipper.lorefitness.core.ActivityRecord, String) -> Unit = { record, label ->
         scope.launch {
-            val result = snackbar.showSnackbar("Logged $label", actionLabel = "Undo", withDismissAction = true)
+            val result = snackbar.showSnackbar("Logged $label", actionLabel = "Undo", withDismissAction = true, duration = SnackbarDuration.Long)
             if (result == SnackbarResult.ActionPerformed) { Sync.undo(context, record); sync() }
         }
     }
@@ -105,6 +106,7 @@ private fun App() {
         Column(Modifier.padding(padding).fillMaxSize()) {
             when (tab) {
                 Tab.TODAY -> TodayScreen(state, syncing, sync, logged)
+                Tab.HISTORY -> HistoryScreen(store, sync)
                 Tab.JOURNAL -> JournalScreen(state)
                 Tab.SETTINGS -> SettingsScreen(store)
             }
@@ -135,7 +137,19 @@ private fun TodayScreen(
                 }
             }
         }
-        item { Text("Today's training", style = MaterialTheme.typography.titleMedium) }
+        item {
+            var later by remember { mutableStateOf(false) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Today's training", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                OutlinedButton(onClick = { later = true }) { Text("Log for another day") }
+            }
+            if (later) LogLaterDialog(onDismiss = { later = false }) { category, date, minutes ->
+                later = false
+                val record = Sync.backdated(context, category, date, minutes)
+                sync()
+                logged(record, "${category.label} for $date")
+            }
+        }
         val categories = state.summary?.optJSONObject("day")?.optJSONArray("categories")
         items(Category.entries) { category ->
             val entry = categories?.let { a -> (0 until a.length()).map { a.getJSONObject(it) }.firstOrNull { it.optString("category") == category.id } }

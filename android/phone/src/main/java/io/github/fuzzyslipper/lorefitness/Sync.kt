@@ -54,6 +54,60 @@ object Sync {
     }
 
     /**
+     * A check-in for an earlier day, as a day-level entry (`start` is the date). The ledger counts it
+     * for that day if the category was not already earned there.
+     */
+    fun backdated(context: Context, category: Category, date: java.time.LocalDate, minutes: Int?): ActivityRecord {
+        val quantities = buildMap<String, Number> {
+            if (minutes != null && minutes > 0) put("durationMin", minutes)
+            if (category == Category.HYDRATION) put("goalMet", 1)
+        }
+        val record = ActivityRecord(
+            source = "lfr-phone",
+            sourceRecordId = UUID.randomUUID().toString(),
+            revision = 1,
+            kind = category.manualKind,
+            category = category.id,
+            start = date.toString(),
+            timeZone = ZoneId.systemDefault().id,
+            quantities = quantities,
+            note = "logged later",
+        )
+        Store.get(context).enqueue(record)
+        return record
+    }
+
+    /**
+     * Corrects one of this app's own records (phone or watch) as the ledger lists it: the same
+     * identity with the next revision, moved to another day, given other minutes, removed or put
+     * back. Queued like any check-in, so it also works offline.
+     */
+    fun correctOwn(context: Context, activity: JSONObject, date: java.time.LocalDate? = null, minutes: Int? = null, deleted: Boolean? = null) {
+        val quantities = activity.optJSONObject("quantities")?.let { q -> q.keys().asSequence().associateWith { q.get(it) as Number } }?.toMutableMap()
+            ?: mutableMapOf()
+        if (minutes != null) { if (minutes > 0) quantities["durationMin"] = minutes else quantities.remove("durationMin") }
+        val start = when {
+            date != null -> date.toString()
+            else -> activity.optString("start")
+        }
+        val record = ActivityRecord(
+            source = activity.getString("source"),
+            sourceRecordId = activity.getString("sourceRecordId"),
+            revision = activity.getLong("revision") + 1,
+            kind = activity.getString("kind"),
+            category = activity.optString("explicitCategory").ifEmpty { null },
+            start = start,
+            end = if (date != null) null else activity.optString("end").ifEmpty { null }.takeIf { it != "null" },
+            timeZone = activity.optString("timeZone").ifEmpty { ZoneId.systemDefault().id },
+            quantities = quantities,
+            note = activity.optString("note").ifEmpty { null }.takeIf { it != "null" },
+            deleted = deleted ?: activity.optBoolean("deletedAtSource"),
+        )
+        Store.get(context).enqueue(record)
+        requestSoon(context)
+    }
+
+    /**
      * Takes back a check-in made by mistake: the same record again with a higher revision, marked
      * deleted, which the ledger treats as the source withdrawing it (its check-in is reversed if it
      * was the only support). Queued like any other change, so it works offline too.

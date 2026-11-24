@@ -86,6 +86,13 @@ class LedgerClient(private val baseUrl: String, private val timeoutMs: Int = 10_
 
     suspend fun bonusRolls(status: String): JSONArray = get("/v1/bonus-rolls?status=$status").getJSONArray("bonusRolls")
 
+    /** Activities by local date, inclusive, each with whether it counts and why not. */
+    suspend fun activities(from: String, to: String): JSONArray = get("/v1/activities?from=$from&to=$to").getJSONArray("activities")
+
+    /** Takes any record out of counting (a re-import keeps it out), or puts it back. */
+    suspend fun removeActivity(id: String, reason: String) { request("POST", "/v1/activities/$id/delete", JSONObject().put("reason", reason)) }
+    suspend fun restoreActivity(id: String, reason: String) { request("POST", "/v1/activities/$id/restore", JSONObject().put("reason", reason)) }
+
     /** Sends records; the results are in the same order. */
     suspend fun postActivities(clientId: String, records: List<ActivityRecord>): List<RecordResult> {
         val body = JSONObject().put("clientId", clientId).put("records", JSONArray(records.map { it.toJson(clientId) }))
