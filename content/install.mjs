@@ -9,6 +9,8 @@
 //        [--connection ID] [--no-fitness]
 //   node content/install.mjs --base URL --chat CHAT_ID --set-race elf
 //   node content/install.mjs --base URL --chat CHAT_ID --refresh-campaign
+//   node content/install.mjs --base URL --chat CHAT_ID --set-player "Persona name" \
+//        [--class warrior|rogue|mage] [--race ...] [--pronouns she/her] [--carry longbow]
 //
 // The campaign data the Training panel reads (war table, crafting, companions, acts and missions)
 // is stored on the game chat as metadata `fitnessCampaign`; --refresh-campaign rewrites it after a
@@ -29,6 +31,29 @@ const args = Object.fromEntries(
 );
 const base = (args.base ?? "http://127.0.0.1:7910").replace(/\/$/, "");
 const RACES = ["human", "elf", "dwarf", "qunari"];
+// Class builds at install: attributes, trained skills and the starting kit (worn, then carried).
+const CLASS_BUILDS = {
+  warrior: {
+    abilities: { strength: 3, dexterity: 1, magic: 0, cunning: 0, willpower: 1, constitution: 2 },
+    skills: { athletics: "trained", intimidation: "trained", survival: "trained" },
+    saves: { fortitude: "trained" },
+    worn: ["longsword", "shield", "chainmail"],
+  },
+  rogue: {
+    abilities: { strength: 0, dexterity: 3, magic: 0, cunning: 2, willpower: 1, constitution: 1 },
+    skills: { stealth: "trained", acrobatics: "trained", perception: "trained" },
+    saves: { reflex: "trained" },
+    worn: ["daggers", "scout-leathers"],
+    carried: ["longbow"],
+  },
+  mage: {
+    abilities: { strength: 0, dexterity: 1, magic: 3, cunning: 1, willpower: 2, constitution: 0 },
+    skills: { arcana: "trained", lore: "trained", medicine: "trained" },
+    saves: { resolve: "trained" },
+    worn: ["staff", "scout-leathers"],
+  },
+};
+const STARTING_POTIONS = 2;
 const dist = (file) => JSON.parse(readFileSync(join(root, "dist", file), "utf8"));
 const manifest = dist("manifest.json");
 
@@ -77,6 +102,93 @@ async function setRace(chatId, race, playerName) {
   });
   await api("PATCH", `/api/chats/${chatId}/metadata`, { activeLorebookIds: [...active, books[race]], gameCharacterCards: cards });
   say(`race set to ${race} for chat ${chatId}`);
+}
+
+/**
+ * Moves a game to another of Marinara's personas, for when the player picks their own character after
+ * the install: the setup's persona, the player card's name (with its level, kit and talents), the
+ * fitness module's player name and, when asked, the class, race and pronouns. On a class change the
+ * attributes, skills and talents follow the new class and the starting kit is swapped; the fitness
+ * sync then grants the new class's talents up to the journal's level. Earned activity is untouched.
+ */
+async function setPlayer(chatId, name) {
+  const personas = await api("GET", "/api/characters/personas/list");
+  const list = Array.isArray(personas) ? personas : (personas.personas ?? []);
+  const persona = list.find((p) => p.name === name);
+  if (!persona) throw new Error(`no persona named "${name}"; create it in Marinara first`);
+  const chat = await api("GET", `/api/chats/${chatId}`);
+  const meta = metadataOf(chat);
+  const setupPersona = list.find((p) => p.id === meta.gameSetupConfig?.personaId);
+  const oldName = meta.fitness?.playerCard ?? setupPersona?.name;
+  const card = (meta.gameCharacterCards ?? []).find((c) => c.name === oldName);
+  if (!card) throw new Error(`no player card named "${oldName}" in this game`);
+  if (name !== oldName && meta.gameCharacterCards.some((c) => c.name === name))
+    throw new Error(`this game already has a card named "${name}"`);
+  const build = card.rulesetSheet?.build ?? {};
+  const oldClass = build.fields?.class;
+  const klass = args.class ?? oldClass;
+  if (!CLASS_BUILDS[klass]) throw new Error("class must be warrior, rogue or mage");
+  const changedClass = klass !== oldClass;
+  const kit = CLASS_BUILDS[klass];
+  const nextBuild = {
+    ...build,
+    fields: { ...build.fields, class: klass, ...(args.pronouns ? { pronouns: args.pronouns } : {}) },
+    ...(changedClass
+      ? {
+          abilities: { ...kit.abilities },
+          skills: { ...kit.skills },
+          saves: { ...kit.saves },
+          // The old class's talents go; the fitness sync grants the new class's by level.
+          lists: { ...build.lists, talents: (build.lists?.talents ?? []).filter((row) => !String(row._catalog ?? "").startsWith("talent_trees/")) },
+        }
+      : {}),
+  };
+  const cards = meta.gameCharacterCards.map((c) => (c === card ? { ...c, name, rulesetSheet: { ...c.rulesetSheet, build: nextBuild } } : c));
+  const state = meta.fitnessCampaignState;
+  await api("PATCH", `/api/chats/${chatId}/metadata`, {
+    gameCharacterCards: cards,
+    gameSetupConfig: { ...meta.gameSetupConfig, personaId: persona.id },
+    ...(meta.fitness ? { fitness: { ...meta.fitness, playerCard: name } } : {}),
+    // The new class's talents are granted afresh; the companions' records stay.
+    ...(changedClass && state ? { fitnessCampaignState: { ...state, talentsGranted: (state.talentsGranted ?? []).filter((id) => id.includes("/")) } } : {}),
+  });
+  if (chat.personaId !== persona.id) await api("PATCH", `/api/chats/${chatId}`, { personaId: persona.id });
+  say(`player card "${oldName}" is now "${name}" (${klass}${changedClass ? `, was ${oldClass}` : ""}); the game's persona is ${name}`);
+  if (changedClass) {
+    const quartermaster = JSON.parse(readFileSync(join(root, "ruleset/inquisition.json"), "utf8")).catalogs.find((c) => c.id === "quartermaster");
+    const label = (id) => quartermaster.entries.find((e) => e.id === id)?.label ?? id;
+    const old = CLASS_BUILDS[oldClass];
+    const oldItems = new Set([...(old?.worn ?? []), ...(old?.carried ?? [])].map((id) => `quartermaster/${id}`));
+    const mine = (metadataOf(await api("GET", `/api/chats/${chatId}`)).gameInventory ?? []).filter((s) => !s.holder && oldItems.has(s.item));
+    if (mine.length)
+      await api("POST", "/api/game/inventory", {
+        chatId,
+        ops: [...mine.filter((s) => s.equipped).map((s) => ({ op: "unequip", id: s.id })), ...mine.map((s) => ({ op: "set", id: s.id, quantity: 0 }))],
+      });
+    const extra = String(args.carry ?? "").split(",").map((id) => id.trim()).filter(Boolean);
+    const items = [...kit.worn, ...(kit.carried ?? []), ...extra.filter((id) => !kit.worn.includes(id) && !(kit.carried ?? []).includes(id))];
+    const added = await api("POST", "/api/game/inventory", {
+      chatId,
+      ops: items.map((id) => ({ op: "add", name: label(id), item: `quartermaster/${id}`, count: 1 })),
+    });
+    const wear = added.inventory.filter((s) => !s.holder && !s.equipped && kit.worn.some((id) => s.item === `quartermaster/${id}`));
+    if (wear.length) await api("POST", "/api/game/inventory", { chatId, ops: wear.map((s) => ({ op: "equip", id: s.id })) });
+    say(`starting kit: ${mine.map((s) => s.name).join(", ") || "nothing"} out; ${items.map(label).join(", ")} in (${kit.worn.map(label).join(", ")} worn)`);
+  }
+  if (args.race) await setRace(chatId, args.race, name);
+  try {
+    await api("POST", `/api/fitness/chats/${chatId}/sync`);
+    say("fitness sync done: level, resources and talents written to the renamed card");
+  } catch (error) {
+    say(`fitness sync not run: ${error.message}`);
+  }
+}
+
+if (args["set-player"]) {
+  if (!args.chat) throw new Error("--chat is required with --set-player");
+  if (args.race && !RACES.includes(args.race)) throw new Error(`race must be one of ${RACES.join(", ")}`);
+  await setPlayer(args.chat, args["set-player"]);
+  process.exit(0);
 }
 
 if (args["refresh-campaign"]) {
@@ -165,28 +277,6 @@ await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards,
 
 // 6. The class: attributes, trained skills and the starting kit, worn. Talents are added by the
 //    fitness module as the level from the fitness journal reaches them (campaign.json progression).
-const CLASS_BUILDS = {
-  warrior: {
-    abilities: { strength: 3, dexterity: 1, magic: 0, cunning: 0, willpower: 1, constitution: 2 },
-    skills: { athletics: "trained", intimidation: "trained", survival: "trained" },
-    saves: { fortitude: "trained" },
-    worn: ["longsword", "shield", "chainmail"],
-  },
-  rogue: {
-    abilities: { strength: 0, dexterity: 3, magic: 0, cunning: 2, willpower: 1, constitution: 1 },
-    skills: { stealth: "trained", acrobatics: "trained", perception: "trained" },
-    saves: { reflex: "trained" },
-    worn: ["daggers", "scout-leathers"],
-    carried: ["longbow"],
-  },
-  mage: {
-    abilities: { strength: 0, dexterity: 1, magic: 3, cunning: 1, willpower: 2, constitution: 0 },
-    skills: { arcana: "trained", lore: "trained", medicine: "trained" },
-    saves: { resolve: "trained" },
-    worn: ["staff", "scout-leathers"],
-  },
-};
-const STARTING_POTIONS = 2;
 const kit = CLASS_BUILDS[klass];
 {
   const meta = metadataOf(await api("GET", `/api/chats/${chatId}`));
