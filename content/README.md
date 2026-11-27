@@ -114,5 +114,25 @@ the ruleset it needs.
 
 `install.mjs` also turns on ruleset-resolved fights for the game and gives the
 Inquisitor the chosen class's attributes, trained skills, a worn starting kit
-and two healing potions (defaults in
+and healing potions (defaults in
 [stage 3](../docs/03-marinara-integration.md#fights-2026-11-23)).
+
+## Classes and the player file
+
+Each class is a pack file in `pack/classes/` (`type: class`): `abilities` (six
+scores in the ruleset's order: strength, dexterity, magic, cunning, willpower,
+constitution), trained `skills` and `saves`, the starting kit `worn` and
+`carried`, and `potions`. `build.mjs` checks the abilities, skills and saves
+against the ruleset's sheet and the items against the quartermaster, and writes
+`dist/classes.json`; a new class or a changed kit needs no installer change.
+
+The character a game is built for comes from a player file, given with
+`install.mjs --player FILE` (or with `--set-player --player FILE` to move an
+existing game to it). [`player.example.json`](player.example.json) shows every
+field: `name` (a Marinara persona; an existing one is used as written, otherwise
+one is created from `description`), `pronouns`, `race`, `class`, `abilities`
+(added to the class scores), extra trained `skills` and `saves`, extra `carry`
+items, `gameName`, `connection` (a connection id or name; otherwise Marinara's
+default) and `fitness` (false leaves the module off). A flag such as `--class`
+overrides the file. Keep a real player's file outside this repository; Lore's is
+in `C:\Dev\Lore-Fitness-RPG-Data\players\` on den-lore.

@@ -212,6 +212,16 @@ overrides the recorded default above for the desktop only.
   with the fitness module on the real ledger, level 1. It uses Lore's default
   connection, "dragonden glm 5.3". It has not been started: the opening is
   generated when Patch presses Start Game.
+- **Lore's game (2026-11-27).** Lore began playing the default game after
+  switching its chat to her own persona, which left the player card behind (see
+  [stage 3](03-marinara-integration.md#changing-the-players-character-after-install-2026-11-27)).
+  Her game is now "Inquisition: Lavellan (season one)" (chat
+  `mQ_0-vsZxR04Kx-H5Ke7q`), built from the player file
+  `C:\Dev\Lore-Fitness-RPG-Data\players\lavellan.json`; the Evelyn Trevelyan
+  game and her test game remain in her list untouched. To rebuild: `git pull`,
+  `node content\build.mjs`, then
+  `node content\install.mjs --base http://127.0.0.1:7860 --player C:\Dev\Lore-Fitness-RPG-Data\players\lavellan.json --connection oPawXaZ95-EjTCuXyiDrx`
+  (Node from fnm's `node-versions`, as in `common.ps1`).
 - Seen in a browser through an SSH tunnel to her loopback port (her Marinara
   asks LAN clients for a login, and her credentials were not used): the game in
   the GM list, the premise and Start Game screen with her connection.

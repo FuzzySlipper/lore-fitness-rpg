@@ -1,6 +1,6 @@
 # Progress and decisions
 
-Updated: 2026-11-23.
+Updated: 2026-11-27.
 
 ## Current state
 
@@ -510,3 +510,21 @@ succeeded with the new paths (see the runbook).
 
 Patch reports the razr and Watch 3 are connected to den-lore with USB debugging
 likely on, so stage 4 can start on the devices.
+
+### 2026-11-27 — Lore's own character; creation from configuration (Claude Code `s/a60d803335a9aa0a`)
+
+Lore started playing and the narration kept to the placeholder Inquisitor
+"Evelyn Trevelyan": switching a chat's persona does not move the player card,
+the setup persona or the fitness link. Diagnosis and the `--set-player` fix in
+[stage 3](03-marinara-integration.md#changing-the-players-character-after-install-2026-11-27).
+At Patch's request creation is now configuration-driven: class builds are pack
+files (`content/pack/classes/`) and the character a player file
+(`--player FILE`, [content guide](../content/README.md#classes-and-the-player-file)).
+Commit `a67a769`. Patch chose a fresh game over moving her test one: "Inquisition:
+Lavellan (season one)" on den-lore, from her own "Lavellan" persona, with her old
+games left untouched.
+
+Validation: scratch Marinara installs from the example file, flags and
+`--set-player --player` (combat-preparation 26/26); on den-lore, the new game's
+persona, setup persona, player card and fitness link checked through the API.
+Not done: its opening turn (generated when Start Game is pressed in her browser).

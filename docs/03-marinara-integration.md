@@ -2,7 +2,7 @@
 
 Status: In progress; the Game Mode fitness module works end to end on scratch
 Marinara (2026-11-18). Owner: Claude Code session `s/a60d803335a9aa0a`.
-Updated: 2026-11-23.
+Updated: 2026-11-27.
 
 Code: Marinara branch `fitness/module` at `abc6d41b2` (real-model fight fixes;
 talents and fights `a4d81c963`;
@@ -500,12 +500,40 @@ right card, the mage talents, staff and leathers worn and a longbow carried, its
 potions kept, the Game Master's prompt naming only the new persona (7 times,
 the old name 0), and a ruleset fight starting with her sheet.
 
-Not yet run on Lore's game (awaiting Patch's go-ahead): her game's full state was
-saved to `C:\Dev\Lore-Fitness-RPG-Data\pre-deploy\game-9o3bWT9FmdO4JfgQ7qzqv-20261127-002608.json`
-first. The command for it:
-`node content\install.mjs --base http://127.0.0.1:7860 --chat 9o3bWT9FmdO4JfgQ7qzqv --set-player "Lavellan" --class mage --race elf --pronouns she/her --carry longbow`.
-The two messages already in that game keep their old wording; later turns use the
-moved card.
+Her test game was left as it was (its state saved to
+`C:\Dev\Lore-Fitness-RPG-Data\pre-deploy\game-9o3bWT9FmdO4JfgQ7qzqv-20261127-002608.json`):
+Patch preferred a fresh start, since she had only begun experimenting.
+
+### Character creation from configuration (2026-11-27)
+
+At Patch's request the installer no longer hard-codes the character. The class
+builds (attributes, skills, saves, worn and carried kit, potions) moved into
+pack files `content/pack/classes/*.md`, checked against the ruleset and the
+quartermaster by `build.mjs` and exported as `dist/classes.json`. The character
+comes from a player file (`--player FILE`; fields in
+[the content guide](../content/README.md#classes-and-the-player-file)), with
+flags still overriding it; `--set-player` takes the same file.
+
+Default chosen: a player file's `abilities` are added to the class scores, and
+its `skills`, `saves` and `carry` add to the class's, so a character is "a mage,
+plus a bow and a hunter's dexterity" rather than a full sheet to fill in. Unknown
+abilities, skills, saves and items stop the install with the valid names, since
+a misspelt item would otherwise be silently missing from the kit.
+
+Validated on scratch Marinara (port 7930): a game from
+`content/player.example.json` (elf mage, dexterity 2, survival trained, staff and
+leathers worn, longbow carried, two potions, the mage talents); a flags-only
+install passing [`combat-preparation.mjs`](../harness/checks/combat-preparation.mjs)
+26/26; and `--set-player --player` moving a warrior game to the example's mage.
+
+On den-lore, from `C:\Dev\Lore-Fitness-RPG-Data\players\lavellan.json` (her
+existing persona "Lavellan" as she wrote it, elf mage, she/her, dexterity 2,
+survival, a longbow carried, her test game's "glm" connection): game
+"Inquisition: Lavellan (season one)", chat `mQ_0-vsZxR04Kx-H5Ke7q`. Checked through
+the API: chat persona and `gameSetupConfig.personaId` both Lavellan's, the player
+card "Lavellan" (elf mage, she/her), and `fitness.playerCard` "Lavellan" with
+the module synced from the real ledger (level 1, 20 XP from Patch's testing).
+Not yet seen: its opening, which is generated when Start Game is pressed.
 
 ## Marinara update procedure
 
