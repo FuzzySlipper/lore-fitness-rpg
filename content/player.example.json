@@ -1,0 +1,15 @@
+{
+  "$comment": "The character a game is built for: node content/install.mjs --base URL --player this-file.json. Every field but name is optional. Synthetic example; keep a real player file outside the repository.",
+  "name": "Ellana Synthetic",
+  "description": "Used only when no persona with this name exists yet: a short description for the new persona.",
+  "pronouns": "she/her",
+  "race": "elf",
+  "class": "mage",
+  "abilities": { "dexterity": 2 },
+  "skills": ["survival"],
+  "saves": [],
+  "carry": ["longbow"],
+  "gameName": "Inquisition: Ellana",
+  "connection": null,
+  "fitness": true
+}

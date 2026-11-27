@@ -38,6 +38,7 @@ const SECTIONS = {
   watch: ["Raven notes", "Drill cues", "Dice flavor"],
   season: ["Premise", "Acts", "How the story moves", "Original characters"],
   recipe: ["At the workshop"],
+  class: ["At the training yard"],
 };
 const HEADER = {
   companion: ["id", "name", "keys", "class", "abilities", "kit"],
@@ -51,6 +52,7 @@ const HEADER = {
   watch: ["id", "companion"],
   season: ["id", "name", "keys"],
   recipe: ["id", "name", "item", "count", "cost", "keys"],
+  class: ["id", "name", "abilities", "skills", "saves", "worn", "carried", "potions"],
 };
 
 const errors = [];
@@ -135,7 +137,7 @@ for (const entry of entries) {
   for (const s of expected) if (s in sections && !sections[s]) fail(file, `section "${s}" is empty`);
   const body = expected.map((s) => sections[s] ?? "").join("\n");
   const total = words(body);
-  const limits = { companion: [250, 900], mission: [150, 650], encounter: [80, 350], project: [50, 250], npc: [60, 300], faction: [60, 300], location: [80, 350], race: [120, 600], watch: [30, 300], season: [150, 700], recipe: [15, 120] }[type];
+  const limits = { companion: [250, 900], mission: [150, 650], encounter: [80, 350], project: [50, 250], npc: [60, 300], faction: [60, 300], location: [80, 350], race: [120, 600], watch: [30, 300], season: [150, 700], recipe: [15, 120], class: [15, 120] }[type];
   if (total < limits[0] || total > limits[1]) warn(file, `${total} words; expected ${limits[0]}–${limits[1]}`);
   if (type === "companion" && listItems(sections["Dialogue examples"] ?? "").length < 4) fail(file, "needs at least 4 dialogue examples");
   if (type === "companion") {
@@ -160,6 +162,19 @@ for (const entry of entries) {
     }
   }
   if (type === "project" && !/^(supplies|training) \d+$/.test(header.cost ?? "")) fail(file, 'cost must look like "supplies 3" or "training 2"');
+  if (type === "class") {
+    // A class is what the installer builds the Inquisitor from: checked against the ruleset's sheet.
+    const sheetSkills = new Set(ruleset.sheet.skills.map((k) => k.id));
+    const sheetSaves = new Set(ruleset.sheet.saves.map((k) => k.id));
+    const scores = [].concat(header.abilities ?? []).map(Number);
+    if (scores.length !== 6 || scores.some((n) => !Number.isInteger(n) || n < -1 || n > 6))
+      fail(file, "abilities must be six whole numbers from -1 to 6 (STR, DEX, MAG, CUN, WIL, CON)");
+    for (const id of [].concat(header.skills ?? [])) if (!sheetSkills.has(id)) fail(file, `skill "${id}" is not on the ruleset's sheet`);
+    for (const id of [].concat(header.saves ?? [])) if (!sheetSaves.has(id)) fail(file, `save "${id}" is not on the ruleset's sheet`);
+    for (const id of [...[].concat(header.worn ?? []), ...[].concat(header.carried ?? [])])
+      if (!items.has(id)) fail(file, `item "${id}" is not in the ruleset's ${ITEM_CATALOG} catalog`);
+    if (!/^\d{1,2}$/.test(header.potions ?? "")) fail(file, "potions must be a whole number");
+  }
   if (type === "recipe") {
     if (!/^supplies \d+$/.test(header.cost ?? "")) fail(file, 'cost must look like "supplies 2"');
     if (!items.has(header.item)) fail(file, `item "${header.item}" is not in the ruleset's ${ITEM_CATALOG} catalog`);
@@ -253,7 +268,7 @@ function worldInfo(name, list) {
 // and a closing "See also" line naming related entries, which the team wiki turns into links.
 const TYPE_LABEL = { project: "war-table project" };
 const titleOf = (e) => `${e.header.name} (${TYPE_LABEL[e.header.type] ?? e.header.type})`;
-const wikiEntries = entries.filter((e) => !["race", "watch", "recipe"].includes(e.header.type));
+const wikiEntries = entries.filter((e) => !["race", "watch", "recipe", "class"].includes(e.header.type));
 const firstSentence = (text = "") => {
   const line = text.replace(/^\s*(-|\d+\.)\s+/, "").split(/\n\s*\n|\n\s*(?:-|\d+\.)\s/)[0].replace(/\s+/g, " ").trim();
   const sentence = line.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? line;
@@ -423,6 +438,23 @@ const campaign = {
     }))
     .sort((a, b) => (a.act ?? 9) - (b.act ?? 9) || a.id.localeCompare(b.id)),
 };
+// The classes the installer builds the Inquisitor from (content/pack/classes).
+const ABILITIES = ["strength", "dexterity", "magic", "cunning", "willpower", "constitution"];
+const classes = Object.fromEntries(
+  ofType("class").map((e) => [
+    e.header.id,
+    {
+      name: e.header.name,
+      abilities: Object.fromEntries(ABILITIES.map((id, i) => [id, Number([].concat(e.header.abilities)[i])])),
+      skills: Object.fromEntries([].concat(e.header.skills ?? []).map((id) => [id, "trained"])),
+      saves: Object.fromEntries([].concat(e.header.saves ?? []).map((id) => [id, "trained"])),
+      worn: [].concat(e.header.worn ?? []),
+      carried: [].concat(e.header.carried ?? []),
+      potions: Number(e.header.potions),
+    },
+  ]),
+);
+writeFileSync(join(distDir, "classes.json"), `${JSON.stringify(classes, null, 2)}\n`);
 writeFileSync(join(distDir, "campaign.json"), `${JSON.stringify(campaign, null, 2)}\n`);
 writeFileSync(
   join(distDir, "manifest.json"),

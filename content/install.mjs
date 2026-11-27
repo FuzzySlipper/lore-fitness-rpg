@@ -4,13 +4,20 @@
 // first. Point it at a scratch instance for testing; on Lore's installation it is run once, by
 // stage 6, after a backup.
 //
-//   node content/install.mjs --base http://127.0.0.1:7910 --name "Evelyn Trevelyan" \
-//        [--race human|elf|dwarf|qunari] [--class warrior|rogue|mage] [--pronouns she/her] \
-//        [--connection ID] [--no-fitness]
+//   node content/install.mjs --base http://127.0.0.1:7910 --player player.json
+//   node content/install.mjs --base URL --name "Evelyn Trevelyan" [--race human|elf|dwarf|qunari] \
+//        [--class warrior|rogue|mage] [--pronouns she/her] [--carry longbow] [--game-name ...] \
+//        [--connection ID-or-name] [--no-fitness]
+//   node content/install.mjs --base URL --chat CHAT_ID --set-player "Persona name" [same options]
+//   node content/install.mjs --base URL --chat CHAT_ID --set-player --player player.json
 //   node content/install.mjs --base URL --chat CHAT_ID --set-race elf
 //   node content/install.mjs --base URL --chat CHAT_ID --refresh-campaign
-//   node content/install.mjs --base URL --chat CHAT_ID --set-player "Persona name" \
-//        [--class warrior|rogue|mage] [--race ...] [--pronouns she/her] [--carry longbow]
+//
+// The character comes from a player file (content/player.example.json shows every field) and/or
+// flags, a flag winning over the file. "name" is a Marinara persona: an existing one is used as it
+// is (write your own character there first), otherwise one is created from "description". The class
+// builds (attributes, skills, starting kit) are pack files in content/pack/classes; the player file
+// adjusts them per character. Keep a real player file outside this public repository.
 //
 // The campaign data the Training panel reads (war table, crafting, companions, acts and missions)
 // is stored on the game chat as metadata `fitnessCampaign`; --refresh-campaign rewrites it after a
@@ -31,31 +38,45 @@ const args = Object.fromEntries(
 );
 const base = (args.base ?? "http://127.0.0.1:7910").replace(/\/$/, "");
 const RACES = ["human", "elf", "dwarf", "qunari"];
-// Class builds at install: attributes, trained skills and the starting kit (worn, then carried).
-const CLASS_BUILDS = {
-  warrior: {
-    abilities: { strength: 3, dexterity: 1, magic: 0, cunning: 0, willpower: 1, constitution: 2 },
-    skills: { athletics: "trained", intimidation: "trained", survival: "trained" },
-    saves: { fortitude: "trained" },
-    worn: ["longsword", "shield", "chainmail"],
-  },
-  rogue: {
-    abilities: { strength: 0, dexterity: 3, magic: 0, cunning: 2, willpower: 1, constitution: 1 },
-    skills: { stealth: "trained", acrobatics: "trained", perception: "trained" },
-    saves: { reflex: "trained" },
-    worn: ["daggers", "scout-leathers"],
-    carried: ["longbow"],
-  },
-  mage: {
-    abilities: { strength: 0, dexterity: 1, magic: 3, cunning: 1, willpower: 2, constitution: 0 },
-    skills: { arcana: "trained", lore: "trained", medicine: "trained" },
-    saves: { resolve: "trained" },
-    worn: ["staff", "scout-leathers"],
-  },
-};
-const STARTING_POTIONS = 2;
 const dist = (file) => JSON.parse(readFileSync(join(root, "dist", file), "utf8"));
 const manifest = dist("manifest.json");
+const rulesetDefinition = JSON.parse(readFileSync(join(root, "ruleset/inquisition.json"), "utf8"));
+
+// Class builds come from the pack (content/pack/classes), checked and exported by build.mjs.
+const CLASS_BUILDS = dist("classes.json");
+
+// The character a game is built for: a JSON file (see content/player.example.json) given with
+// --player, with any flag taking precedence over it.
+const player = args.player && args.player !== "true" ? JSON.parse(readFileSync(args.player, "utf8")) : {};
+const option = (flag, key, fallback) => args[flag] ?? player[key] ?? fallback;
+const listOf = (value) => (Array.isArray(value) ? value : String(value ?? "").split(",")).map((v) => String(v).trim()).filter(Boolean);
+
+/** The class build with the player's own adjustments: attributes, extra trained skills and saves, extra gear. */
+function buildFor(klass) {
+  const base = CLASS_BUILDS[klass];
+  if (!base) throw new Error(`class must be one of ${Object.keys(CLASS_BUILDS).join(", ")}`);
+  const sheet = rulesetDefinition.sheet;
+  const abilities = { ...base.abilities, ...(player.abilities ?? {}) };
+  for (const [id, value] of Object.entries(player.abilities ?? {})) {
+    if (!sheet.abilities.some((a) => a.id === id)) throw new Error(`player file: unknown ability "${id}"`);
+    if (!Number.isInteger(value) || value < -1 || value > 6) throw new Error(`player file: ${id} must be a whole number from -1 to 6`);
+  }
+  const trained = (ids, known, what) =>
+    Object.fromEntries(listOf(ids).map((id) => {
+      if (!known.some((k) => k.id === id)) throw new Error(`player file: unknown ${what} "${id}"`);
+      return [id, "trained"];
+    }));
+  const quartermaster = rulesetDefinition.catalogs.find((c) => c.id === "quartermaster");
+  const extra = [...listOf(args.carry), ...listOf(player.carry)];
+  for (const id of extra) if (!quartermaster.entries.some((e) => e.id === id)) throw new Error(`unknown item "${id}" to carry`);
+  return {
+    ...base,
+    abilities,
+    skills: { ...base.skills, ...trained(player.skills, sheet.skills, "skill") },
+    saves: { ...base.saves, ...trained(player.saves, sheet.saves, "save") },
+    carried: [...new Set([...base.carried, ...extra])].filter((id) => !base.worn.includes(id)),
+  };
+}
 
 async function api(method, path, body) {
   const response = await fetch(`${base}${path}`, {
@@ -126,13 +147,13 @@ async function setPlayer(chatId, name) {
     throw new Error(`this game already has a card named "${name}"`);
   const build = card.rulesetSheet?.build ?? {};
   const oldClass = build.fields?.class;
-  const klass = args.class ?? oldClass;
-  if (!CLASS_BUILDS[klass]) throw new Error("class must be warrior, rogue or mage");
+  const klass = option("class", "class", oldClass);
+  const kit = buildFor(klass);
   const changedClass = klass !== oldClass;
-  const kit = CLASS_BUILDS[klass];
+  const pronouns = option("pronouns", "pronouns");
   const nextBuild = {
     ...build,
-    fields: { ...build.fields, class: klass, ...(args.pronouns ? { pronouns: args.pronouns } : {}) },
+    fields: { ...build.fields, class: klass, ...(pronouns ? { pronouns } : {}) },
     ...(changedClass
       ? {
           abilities: { ...kit.abilities },
@@ -165,8 +186,7 @@ async function setPlayer(chatId, name) {
         chatId,
         ops: [...mine.filter((s) => s.equipped).map((s) => ({ op: "unequip", id: s.id })), ...mine.map((s) => ({ op: "set", id: s.id, quantity: 0 }))],
       });
-    const extra = String(args.carry ?? "").split(",").map((id) => id.trim()).filter(Boolean);
-    const items = [...kit.worn, ...(kit.carried ?? []), ...extra.filter((id) => !kit.worn.includes(id) && !(kit.carried ?? []).includes(id))];
+    const items = [...kit.worn, ...kit.carried];
     const added = await api("POST", "/api/game/inventory", {
       chatId,
       ops: items.map((id) => ({ op: "add", name: label(id), item: `quartermaster/${id}`, count: 1 })),
@@ -175,7 +195,8 @@ async function setPlayer(chatId, name) {
     if (wear.length) await api("POST", "/api/game/inventory", { chatId, ops: wear.map((s) => ({ op: "equip", id: s.id })) });
     say(`starting kit: ${mine.map((s) => s.name).join(", ") || "nothing"} out; ${items.map(label).join(", ")} in (${kit.worn.map(label).join(", ")} worn)`);
   }
-  if (args.race) await setRace(chatId, args.race, name);
+  const race = option("race", "race");
+  if (race) await setRace(chatId, race, name);
   try {
     await api("POST", `/api/fitness/chats/${chatId}/sync`);
     say("fitness sync done: level, resources and talents written to the renamed card");
@@ -186,8 +207,11 @@ async function setPlayer(chatId, name) {
 
 if (args["set-player"]) {
   if (!args.chat) throw new Error("--chat is required with --set-player");
-  if (args.race && !RACES.includes(args.race)) throw new Error(`race must be one of ${RACES.join(", ")}`);
-  await setPlayer(args.chat, args["set-player"]);
+  const race = option("race", "race");
+  if (race && !RACES.includes(race)) throw new Error(`race must be one of ${RACES.join(", ")}`);
+  const name = args["set-player"] !== "true" ? args["set-player"] : player.name;
+  if (!name) throw new Error("--set-player needs a persona name, or a --player file with one");
+  await setPlayer(args.chat, name);
   process.exit(0);
 }
 
@@ -205,12 +229,14 @@ if (args["set-race"]) {
   process.exit(0);
 }
 
-const name = args.name;
+const name = option("name", "name");
 if (!name) throw new Error('--name "Inquisitor name" is required');
-const race = args.race ?? "human";
-const klass = args.class ?? "warrior";
+const race = option("race", "race", "human");
+const klass = option("class", "class", "warrior");
+const pronouns = option("pronouns", "pronouns");
+const gameName = option("game-name", "gameName", `Inquisition: ${name}`);
 if (!RACES.includes(race)) throw new Error(`race must be one of ${RACES.join(", ")}`);
-if (!["warrior", "rogue", "mage"].includes(klass)) throw new Error("class must be warrior, rogue or mage");
+const kit = buildFor(klass);
 
 // 1. Ruleset (imports must be allowed; a re-import of the same version is reported, not an error).
 await api("PATCH", "/api/agents/import-policy", { enabled: true });
@@ -231,15 +257,19 @@ const books = await raceBookIds();
 const personas = await api("GET", "/api/characters/personas/list");
 const persona =
   (Array.isArray(personas) ? personas : (personas.personas ?? [])).find((p) => p.name === name) ??
-  (await api("POST", "/api/characters/personas", { name, description: `The Inquisitor. ${args.pronouns ? `Pronouns: ${args.pronouns}.` : ""}`.trim() }));
+  (await api("POST", "/api/characters/personas", {
+    name,
+    description: player.description ?? `The Inquisitor. ${pronouns ? `Pronouns: ${pronouns}.` : ""}`.trim(),
+  }));
 
 // 4. The game.
 const connections = await api("GET", "/api/connections");
-const connection = args.connection
-  ? connections.find((c) => c.id === args.connection)
+const connectionChoice = option("connection", "connection");
+const connection = connectionChoice
+  ? connections.find((c) => c.id === connectionChoice || c.name === connectionChoice)
   : (connections.find((c) => c.isDefault === true || c.isDefault === "true") ?? connections[0]);
 const created = await api("POST", "/api/game/create", {
-  name: `Inquisition: ${name}`,
+  name: gameName,
   connectionId: connection?.id,
   personaId: persona.id,
   setupConfig: {
@@ -271,13 +301,12 @@ const meta = metadataOf(await api("GET", `/api/chats/${chatId}`));
 const cards = meta.gameCharacterCards.map((card) => {
   if (card.name !== name) return card;
   const build = card.rulesetSheet.build;
-  return { ...card, rulesetSheet: { ...card.rulesetSheet, build: { ...build, fields: { ...build.fields, class: klass, ...(args.pronouns ? { pronouns: args.pronouns } : {}) } } } };
+  return { ...card, rulesetSheet: { ...card.rulesetSheet, build: { ...build, fields: { ...build.fields, class: klass, ...(pronouns ? { pronouns } : {}) } } } };
 });
 await api("PATCH", `/api/chats/${chatId}/metadata`, { gameCharacterCards: cards, fitnessCampaign: dist("campaign.json") });
 
 // 6. The class: attributes, trained skills and the starting kit, worn. Talents are added by the
 //    fitness module as the level from the fitness journal reaches them (campaign.json progression).
-const kit = CLASS_BUILDS[klass];
 {
   const meta = metadataOf(await api("GET", `/api/chats/${chatId}`));
   const cards = meta.gameCharacterCards.map((card) => {
@@ -300,12 +329,12 @@ const kit = CLASS_BUILDS[klass];
   const quartermaster = JSON.parse(rulesetText).catalogs.find((c) => c.id === "quartermaster");
   const itemRef = (id) => `quartermaster/${id}`;
   const label = (id) => quartermaster.entries.find((e) => e.id === id)?.label ?? id;
-  const items = [...kit.worn, ...(kit.carried ?? [])];
+  const items = [...kit.worn, ...kit.carried];
   const added = await api("POST", "/api/game/inventory", {
     chatId,
     ops: [
       ...items.map((id) => ({ op: "add", name: label(id), item: itemRef(id), count: 1 })),
-      { op: "add", name: label("healing-potion"), item: itemRef("healing-potion"), count: STARTING_POTIONS },
+      { op: "add", name: label("healing-potion"), item: itemRef("healing-potion"), count: kit.potions },
     ],
   });
   const refused = added.results.filter((result) => !result.ok);
@@ -316,7 +345,7 @@ const kit = CLASS_BUILDS[klass];
     const notWorn = worn.results.filter((result) => !result.ok);
     if (notWorn.length) say(`starting kit: ${notWorn.length} item(s) not worn: ${JSON.stringify(notWorn)}`);
   }
-  say(`${klass} kit: ${items.join(", ")} (${kit.worn.join(", ")} worn), ${STARTING_POTIONS} healing potions`);
+  say(`${klass} kit: ${items.join(", ")} (${kit.worn.join(", ")} worn), ${kit.potions} healing potions`);
 }
 
 // 7. The companions: a ruleset sheet each (class and attributes from the pack), so a fight the Game
@@ -367,7 +396,7 @@ const kit = CLASS_BUILDS[klass];
 }
 
 // 8. The fitness module, when this Marinara has it.
-if (args["no-fitness"] !== "true") {
+if (args["no-fitness"] !== "true" && player.fitness !== false) {
   try {
     const view = await api("POST", `/api/fitness/chats/${chatId}/enable`, { enabled: true });
     say(`fitness module on (ledger ${view.ledger.reachable ? "reachable" : "unreachable"}, level ${view.character?.level ?? "?"})`);
