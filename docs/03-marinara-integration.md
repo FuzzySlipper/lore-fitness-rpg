@@ -472,6 +472,41 @@ with five fighters (Marinara's layout). The scripted
 [`combat-preparation.mjs`](../harness/checks/combat-preparation.mjs) now covers
 companions, a fuller ally name, a sheetless ally and loot (26/26).
 
+## Changing the player's character after install (2026-11-27)
+
+Found when Lore started playing: the game was installed with the placeholder
+persona "Evelyn Trevelyan" (human warrior), and she then switched the chat to her
+own persona "Lavellan" (a Dalish elf mage who also hunts with a bow) and renamed
+the game. The narration kept treating Evelyn Trevelyan as the Inquisitor because
+the player's identity lives in three places that do not follow a persona switch:
+
+- the player card in `gameCharacterCards` (name, class, race, level, kit and
+  talents), still "Evelyn Trevelyan", which the Game Master reads as a character
+  sheet;
+- `gameSetupConfig.personaId`, still the installer's persona;
+- the fitness module, which finds the player's card by the chat persona's name
+  ("Lavellan"), found none, so its level and resources stopped reaching a sheet;
+  a ruleset fight would likewise find no sheet for the player.
+
+A configuration mismatch rather than a code fault, but the installer gave no way
+to change it. `content/install.mjs --chat ID --set-player NAME [--class …]
+[--race …] [--pronouns …] [--carry item,…]` now moves a game to another existing
+persona: renames the player card (keeping level, kit and talents), points the
+setup and the fitness module at the persona, and on a class change resets
+attributes, skills and talents to the new class (the fitness sync grants its
+talents by level) and swaps the starting kit; `--race` swaps the race lorebook.
+Verified on scratch: a level 6 human warrior moved to an elf mage persona had the
+right card, the mage talents, staff and leathers worn and a longbow carried, its
+potions kept, the Game Master's prompt naming only the new persona (7 times,
+the old name 0), and a ruleset fight starting with her sheet.
+
+Not yet run on Lore's game (awaiting Patch's go-ahead): her game's full state was
+saved to `C:\Dev\Lore-Fitness-RPG-Data\pre-deploy\game-9o3bWT9FmdO4JfgQ7qzqv-20261127-002608.json`
+first. The command for it:
+`node content\install.mjs --base http://127.0.0.1:7860 --chat 9o3bWT9FmdO4JfgQ7qzqv --set-player "Lavellan" --class mage --race elf --pronouns she/her --carry longbow`.
+The two messages already in that game keep their old wording; later turns use the
+moved card.
+
 ## Marinara update procedure
 
 The fitness module is ordinary commits on a local branch; it is merged, not
