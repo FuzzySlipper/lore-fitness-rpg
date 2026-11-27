@@ -584,7 +584,8 @@ update and rebuild (`Already up to date`, 107 entries). Fixed along the way: a
 loaded file's `$comment` was sent as a character field and refused, the tab
 rendered above the tab bar, the form ignored the game's own class and race, and
 the ability grid was cut off at phone width. campaign-views 16/16 on the same
-build. Not yet on den-lore: deploying restarts her Marinara (see stage 6).
+build. On den-lore since 2026-11-27 04:13 (stage 6); there only the
+`GET /api/fitness/setup` readout was checked, not the tab in a browser.
 
 ## Marinara update procedure
 

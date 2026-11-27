@@ -225,6 +225,16 @@ overrides the recorded default above for the desktop only.
 - Seen in a browser through an SSH tunnel to her loopback port (her Marinara
   asks LAN clients for a login, and her credentials were not used): the game in
   the GM list, the premise and Start Game screen with her connection.
+- **Setup tab (2026-11-27 04:11).** `switch-marinara.ps1 -Branch
+  deploy/lore-desktop` moved Marinara-Engine from `5a72dc88e` to `1c514ede7`
+  (backup `pre-deploy\20261127-041117`), with no LAN client connected. The tab
+  finds `C:\Dev\lore-fitness-rpg` and `C:\Dev\Lore-Fitness-RPG-Data` by
+  default, so `.env` was not changed. From another machine it needs Marinara's
+  admin secret or trusted-network setting, as other privileged routes do. Over
+  SSH, the readout at `http://127.0.0.1:7860/api/fitness/setup` lists
+  `lavellan.json` and her game's card. SSH from Linux can't quote a PowerShell
+  pipeline inline, so the switch went through a small `.ps1` copied to
+  `pre-deploy` that puts fnm's Node on PATH first.
 
 Patch's own check-ins, war-table orders and crafting while testing are recorded
 in the real ledger. Before Lore's release, remove test activity with

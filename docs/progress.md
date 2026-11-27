@@ -539,7 +539,14 @@ defaults in [stage 3](03-marinara-integration.md#setup-tab-2026-11-27). Marinara
 and fetched into den-lore's Marinara-Engine.
 
 Validation: every action driven in a headless browser on scratch Marinara,
-campaign-views 16/16. Not done: the switch on den-lore, which restarts her
-Marinara for the rebuild; held at 01:35 because a LAN client (192.168.1.200)
-had it open. Next: run `switch-marinara.ps1 -Branch deploy/lore-desktop` with
-Patch's go-ahead and look at the tab there.
+campaign-views 16/16. The switch on den-lore was held at 01:35 because a LAN
+client (192.168.1.200) had Marinara open, then run at 04:11 with Patch's
+go-ahead and no client connected: backup
+`pre-deploy\20261127-041117`, built with Node 25, answering on 7860 at
+`1c514ede7` after about two and a quarter minutes. On her loopback
+`GET /api/fitness/setup` reports the content and data folders found by default,
+the three classes, `lavellan.json` and the current card (Lavellan, elf mage,
+she/her). Not done there: a browser look at the tab, since reaching the Training
+panel in her unstarted game means pressing Start Game, which would generate her
+opening on her connection. No action was run on her machine. Next: Lore or Patch
+opens the tab after starting the game.
