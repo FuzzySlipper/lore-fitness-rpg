@@ -535,6 +535,57 @@ card "Lavellan" (elf mage, she/her), and `fitness.playerCard` "Lavellan" with
 the module synced from the real ledger (level 1, 20 XP from Patch's testing).
 Not yet seen: its opening, which is generated when Start Game is pressed.
 
+## Setup tab (2026-11-27)
+
+At Patch's request, the campaign checkout's commands also run from inside
+Marinara: a **Setup** tab in the Training panel (`GameFitnessSetup.tsx`, routes
+`GET /api/fitness/setup` and `POST /api/fitness/setup/run` in Marinara
+`c3531ee1a`, merged into `deploy/lore-desktop` as `1c514ede7`). It offers fixed
+actions with forms, not a free command line:
+
+| Action | Runs |
+| --- | --- |
+| Change this game's character (after a confirmation) | saves the form as a player file, then `install.mjs --chat ID --set-player --player FILE` |
+| Start a new game with this character | saves the player file, then `install.mjs --player FILE`; an "Open the new game" button follows |
+| Change race | `install.mjs --chat ID --set-race RACE` |
+| Refresh campaign data | `install.mjs --chat ID --refresh-campaign` |
+| Update and rebuild the content | `git pull --ff-only`, then `node content/build.mjs` |
+| Back up the journal now | `node service/src/cli.ts backup --data DATA` |
+
+The form offers the personas, classes (from `dist/classes.json`), races, the
+ruleset's abilities, skills and saves, the quartermaster's items and the
+connections, and starts from the game's own player card, or from a player file
+of the same name. A loaded player file is saved back to (its `$comment` kept);
+otherwise the file is named after the character. Defaults chosen:
+
+- **Fixed actions rather than a command box.** A free command box would make any
+  Marinara login on the LAN a shell on Lore's desktop. The useful commands are a
+  short known list, and forms are easier for Lore than flags.
+- **Marinara's own privileged-access check** (`requirePrivilegedAccess`, trusted
+  network allowed): open from the desktop itself (loopback); from another
+  machine only with Marinara's admin secret or trusted-network allowlist.
+- **One run at a time**, since a second click during an install would install
+  a second copy of the game. Commands run with Marinara's own Node, five
+  minutes at most, and the output is shown in the tab.
+- **Where things are:** `MARINARA_FITNESS_CONTENT_DIR` (the lore-fitness-rpg
+  checkout) and `MARINARA_FITNESS_DATA_DIR` (the ledger data root; player files
+  in its `players` folder), with Windows defaults `C:\Dev\lore-fitness-rpg` and
+  `C:\Dev\Lore-Fitness-RPG-Data`, which is den-lore's layout, so nothing is
+  set in her `.env`.
+- The tab is loaded on first use: adding it to the game bundle pushed that past
+  Marinara's chunk-size budget, which fails the build.
+
+Validated on scratch Marinara (port 7930) in headless Chromium at 1280×800 and
+400×800: the form starting from a human warrior's card; a new game from the
+loaded example file (saved back to `ellana.json`) and its Open button reaching
+the new game's Start screen; race change; journal backup; moving the warrior
+game to the new persona as a mage (card, kit, race and fitness sync reported);
+update and rebuild (`Already up to date`, 107 entries). Fixed along the way: a
+loaded file's `$comment` was sent as a character field and refused, the tab
+rendered above the tab bar, the form ignored the game's own class and race, and
+the ability grid was cut off at phone width. campaign-views 16/16 on the same
+build. Not yet on den-lore: deploying restarts her Marinara (see stage 6).
+
 ## Marinara update procedure
 
 The fitness module is ordinary commits on a local branch; it is merged, not

@@ -528,3 +528,18 @@ Validation: scratch Marinara installs from the example file, flags and
 `--set-player --player` (combat-preparation 26/26); on den-lore, the new game's
 persona, setup persona, player card and fitness link checked through the API.
 Not done: its opening turn (generated when Start Game is pressed in her browser).
+
+### 2026-11-27 — Setup tab in the Training panel (Claude Code `s/a60d803335a9aa0a`)
+
+At Patch's request, the installer's jobs (change the game's character, new game
+from a character, race, campaign refresh, content update and rebuild, journal
+backup) run from a Setup tab in Marinara as fixed actions with forms; details and
+defaults in [stage 3](03-marinara-integration.md#setup-tab-2026-11-27). Marinara
+`c3531ee1a` on `fitness/module`, merged into `deploy/lore-desktop` (`1c514ede7`)
+and fetched into den-lore's Marinara-Engine.
+
+Validation: every action driven in a headless browser on scratch Marinara,
+campaign-views 16/16. Not done: the switch on den-lore, which restarts her
+Marinara for the rebuild; held at 01:35 because a LAN client (192.168.1.200)
+had it open. Next: run `switch-marinara.ps1 -Branch deploy/lore-desktop` with
+Patch's go-ahead and look at the tab there.

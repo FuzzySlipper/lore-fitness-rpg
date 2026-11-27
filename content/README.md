@@ -136,3 +136,7 @@ items, `gameName`, `connection` (a connection id or name; otherwise Marinara's
 default) and `fitness` (false leaves the module off). A flag such as `--class`
 overrides the file. Keep a real player's file outside this repository; Lore's is
 in `C:\Dev\Lore-Fitness-RPG-Data\players\` on den-lore.
+
+The same jobs run from inside Marinara: the Training panel's **Setup** tab edits
+the character in a form, saves it as a player file and runs the installer (see
+[stage 3](../docs/03-marinara-integration.md#setup-tab-2026-11-27)).
